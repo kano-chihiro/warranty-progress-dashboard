@@ -3646,6 +3646,7 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
+            // まず localStorage からロード（即座に表示）
             loadData();
             loadServiceData();
             loadReviewData();
@@ -3657,6 +3658,25 @@
             calculateServiceAll();
             initCharts();
             updateServiceProgress();
+
+            // クラウドからデータをロード（非同期、最新データで上書き）
+            loadFromCloud().then(function(cloud) {
+                if (cloud && applyCloudData(cloud)) {
+                    calculateAll();
+                    calculateServiceAll();
+                    updateCharts();
+                    updateStats();
+                    if (serviceChartsInitialized) {
+                        updateServiceCharts();
+                        updateServiceProgress();
+                    }
+                    var sv = cloud.dashboardViewState;
+                    if (sv && (sv === 'warranty' || sv === 'service')) {
+                        setView(sv);
+                    }
+                    showToast('クラウドから最新データを取得しました');
+                }
+            });
 
             // 印刷時にChart.jsのチャートを適切にリサイズし、ラベルがはみ出さないようにする
             window.addEventListener('beforeprint', function() {
@@ -4667,6 +4687,171 @@
             }
         }
 
+        // ===== CLOUD SYNC (D1) =====
+        var cloudSyncVersions = {};
+
+        function getApiBase() {
+            return window.location.origin;
+        }
+
+        function collectAllData() {
+            var data = getTableData();
+            var budgetData = {
+                warrantyBudget: parseInt(document.getElementById('warrantyBudget').value) || 0,
+                warrantyActualAmount: parseInt(document.getElementById('warrantyActualAmount').value) || 0
+            };
+            var warrantyObj = { data: data, budget: budgetData, savedAt: new Date().toISOString() };
+
+            var svcTableData = {};
+            ['serviceTable1', 'serviceTable2'].forEach(function(tableId) {
+                document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(function(row) {
+                    var key = row.dataset.service;
+                    if (!key) return;
+                    svcTableData[key] = {
+                        customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
+                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0,
+                        target: parseInt(row.querySelector('input[data-field="target"]')?.value) || 0
+                    };
+                });
+            });
+            var serviceObj = {
+                services: svcTableData,
+                budget: {
+                    budgetBase: parseInt(document.getElementById('svcBudgetBase').value) || 0,
+                    targetMaint: parseInt(document.getElementById('svcTargetMaint').value) || 0,
+                    targetSetup: parseInt(document.getElementById('svcTargetSetup').value) || 0
+                },
+                savedAt: new Date().toISOString()
+            };
+
+            var reviewObj = {
+                month: document.getElementById('reviewMonth').value,
+                author: document.getElementById('reviewAuthor').value,
+                reviewWarranty: document.getElementById('reviewWarranty').value,
+                reviewSupport: document.getElementById('reviewSupport').value,
+                reviewService: document.getElementById('reviewService').value,
+                actionWarranty: document.getElementById('actionWarranty').value,
+                actionService: document.getElementById('actionService').value,
+                savedAt: new Date().toISOString()
+            };
+
+            return {
+                warrantyDashboardData: warrantyObj,
+                serviceDashboardData: serviceObj,
+                reviewDashboardData: reviewObj,
+                dashboardViewState: currentView
+            };
+        }
+
+        function syncToCloud() {
+            var allData = collectAllData();
+            allData.baseVersions = cloudSyncVersions;
+
+            return fetch(getApiBase() + '/api/sync', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(allData)
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(result) {
+                if (result.ok) {
+                    if (result.meta && result.meta.versions) {
+                        cloudSyncVersions = result.meta.versions;
+                    }
+                    return { ok: true };
+                } else if (result.error === 'VERSION_CONFLICT') {
+                    return { ok: false, conflict: true, latest: result };
+                }
+                return { ok: false, error: result.error };
+            })
+            .catch(function(err) {
+                console.warn('Cloud sync failed (offline?):', err);
+                return { ok: false, offline: true };
+            });
+        }
+
+        function loadFromCloud() {
+            return fetch(getApiBase() + '/api/sync')
+                .then(function(res) { return res.json(); })
+                .then(function(result) {
+                    if (!result.ok) return null;
+                    if (result.meta && result.meta.versions) {
+                        cloudSyncVersions = result.meta.versions;
+                    }
+                    return result;
+                })
+                .catch(function(err) {
+                    console.warn('Cloud load failed (offline?):', err);
+                    return null;
+                });
+        }
+
+        function applyCloudData(cloud) {
+            if (!cloud) return false;
+
+            if (cloud.warrantyDashboardData) {
+                var wd = cloud.warrantyDashboardData;
+                var wData = wd.data || wd;
+                if (wData.table1) {
+                    setRowData('table1', 'hard', wData.table1.hard);
+                    setRowData('table1', 'warranty', wData.table1.warranty);
+                    setRowData('table1', 'support', wData.table1.support);
+                }
+                if (wData.table2) {
+                    setRowData('table2', 'used', wData.table2.used);
+                    setRowData('table2', 'usedSupport', wData.table2.usedSupport);
+                }
+                if (wd.budget) {
+                    document.getElementById('warrantyBudget').value = wd.budget.warrantyBudget || 0;
+                    document.getElementById('warrantyActualAmount').value = wd.budget.warrantyActualAmount || 0;
+                }
+                localStorage.setItem('warrantyDashboardData', JSON.stringify(wd));
+            }
+
+            if (cloud.serviceDashboardData) {
+                var sd = cloud.serviceDashboardData;
+                if (sd.budget) {
+                    document.getElementById('svcBudgetBase').value = sd.budget.budgetBase ?? 580000;
+                    document.getElementById('svcTargetMaint').value = sd.budget.targetMaint ?? 435000;
+                    document.getElementById('svcTargetSetup').value = sd.budget.targetSetup ?? 145000;
+                }
+                if (sd.services) {
+                    ['serviceTable1', 'serviceTable2'].forEach(function(tableId) {
+                        document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(function(row) {
+                            var key = row.dataset.service;
+                            if (!key || !sd.services[key]) return;
+                            var d = sd.services[key];
+                            var custInput = row.querySelector('input[data-field="customers"]');
+                            var salesInput = row.querySelector('input[data-field="sales"]');
+                            var targetInput = row.querySelector('input[data-field="target"]');
+                            if (custInput && custInput.type === 'number') custInput.value = d.customers || 0;
+                            if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
+                            if (targetInput && targetInput.type === 'number') targetInput.value = d.target || 0;
+                        });
+                    });
+                }
+                localStorage.setItem('serviceDashboardData', JSON.stringify(sd));
+            }
+
+            if (cloud.reviewDashboardData) {
+                var rd = cloud.reviewDashboardData;
+                document.getElementById('reviewMonth').value = rd.month || getDefaultReviewMonth();
+                document.getElementById('reviewAuthor').value = rd.author || '本間';
+                document.getElementById('reviewWarranty').value = rd.reviewWarranty || '';
+                document.getElementById('reviewSupport').value = rd.reviewSupport || '';
+                document.getElementById('reviewService').value = rd.reviewService || '';
+                document.getElementById('actionWarranty').value = rd.actionWarranty || '';
+                document.getElementById('actionService').value = rd.actionService || '';
+                localStorage.setItem('reviewDashboardData', JSON.stringify(rd));
+            }
+
+            if (cloud.dashboardViewState && (cloud.dashboardViewState === 'warranty' || cloud.dashboardViewState === 'service')) {
+                localStorage.setItem('dashboardViewState', cloud.dashboardViewState);
+            }
+
+            return true;
+        }
+
         // Save data (both views)
         function saveData() {
             // 保証データを保存
@@ -4689,7 +4874,16 @@
             // 振り返りデータも保存
             saveReviewData();
 
-            showToast('データを保存しました');
+            // クラウドに同期
+            syncToCloud().then(function(result) {
+                if (result.ok) {
+                    showToast('データを保存しました（クラウド同期済み）');
+                } else if (result.conflict) {
+                    showToast('バージョン競合が発生しました。リロードしてください。', true);
+                } else {
+                    showToast('ローカル保存済み（クラウド同期は後で再試行）');
+                }
+            });
         }
 
         // ===== SERVICE VIEW FUNCTIONS =====
@@ -5318,9 +5512,14 @@
         }
 
         // Show toast
-        function showToast(message) {
+        function showToast(message, isWarning) {
             const toast = document.getElementById('toast');
             toast.textContent = message;
+            if (isWarning) {
+                toast.style.background = 'var(--nk-accent-warm)';
+            } else {
+                toast.style.background = '';
+            }
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 2500);
         }

@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "warranty-progress-pages",
+  "compatibility_date": "2026-02-12",
+  "pages_build_output_dir": ".",
+  "d1_databases": [
+    {
+      "binding": "warranty_progress_db",
+      // Cloudflare Dashboard 上の D1 database name と一致させてください
+      "database_name": "warranty-progress-db",
+      "database_id": "cb5225fc-7b0c-4a50-9043-959d0316f877",
+      "preview_database_id": "cb5225fc-7b0c-4a50-9043-959d0316f877",
+      "migrations_dir": "migrations"
+    }
+  ]
+}
