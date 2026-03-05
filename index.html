@@ -973,7 +973,7 @@
         .budget-bar {
             height: 100%;
             border-radius: 12px;
-            background: #5C4A3D;
+            background: var(--color-green);
             transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
@@ -1546,22 +1546,23 @@
             .header-left {
                 display: flex !important;
                 align-items: center !important;
-                gap: 10px;
+                gap: 12px;
                 min-width: 0;
             }
 
             .header-title h1 {
-                font-size: 1.15rem;
+                font-size: 1.6rem;
                 line-height: 1.2;
                 white-space: nowrap;
+                font-weight: 600;
             }
 
             .update-date {
                 display: inline-flex;
                 align-items: center;
                 line-height: 1;
-                font-size: 0.75rem;
-                padding: 3px 10px;
+                font-size: 1rem;
+                padding: 4px 12px;
                 white-space: nowrap;
             }
 
@@ -1803,19 +1804,27 @@
             #serviceCharts .service-budget-meter,
             .preview-mode #serviceCharts .service-budget-meter {
                 display: flex !important;
-                min-width: 80px !important;
-                padding: 4px 12px !important;
-                gap: 2px !important;
+                min-width: 140px !important;
+                padding: 8px 18px !important;
+                gap: 3px !important;
             }
 
             #serviceCharts .service-budget-meter-label,
             .preview-mode #serviceCharts .service-budget-meter-label {
-                font-size: 0.55rem !important;
+                font-size: 0.85rem !important;
+                letter-spacing: 0.06em !important;
             }
 
             #serviceCharts .service-budget-meter-value,
             .preview-mode #serviceCharts .service-budget-meter-value {
-                font-size: 0.85rem !important;
+                font-size: 1.35rem !important;
+                font-weight: 600 !important;
+            }
+
+            #serviceCharts .service-budget-meter-divider,
+            .preview-mode #serviceCharts .service-budget-meter-divider {
+                width: 55px !important;
+                margin: 1px 0 !important;
             }
 
             #serviceCharts .donut-chart-visual,
@@ -1851,7 +1860,7 @@
             #serviceCharts .donut-chart-legend,
             .preview-mode #serviceCharts .donut-chart-legend {
                 flex: 0 0 auto !important;
-                min-width: 230px !important;
+                min-width: auto !important;
                 max-width: 320px !important;
                 gap: 10px !important;
             }
@@ -1859,6 +1868,7 @@
             #serviceCharts .donut-legend-text,
             .preview-mode #serviceCharts .donut-legend-text {
                 font-size: 0.95rem !important;
+                flex: 0 0 auto !important;
             }
 
             #serviceCharts .donut-legend-status,
@@ -2150,7 +2160,7 @@
             .budget-bar {
                 height: 16px;
                 border-radius: 8px;
-                background: #5C4A3D !important;
+                background: #5A8A5A !important;
                 overflow: visible !important;
             }
 
@@ -2288,13 +2298,11 @@
 
         .service-table th:first-child {
             text-align: left;
-            width: 30%;
+            width: 50%;
         }
 
-        .service-table th:nth-child(2) { width: 12%; }
-        .service-table th:nth-child(3) { width: 20%; }
-        .service-table th:nth-child(4) { width: 20%; }
-        .service-table th:nth-child(5) { width: 18%; }
+        .service-table th:nth-child(2) { width: 20%; }
+        .service-table th:nth-child(3) { width: 30%; }
 
         .service-table td {
             padding: 8px 12px;
@@ -2331,25 +2339,19 @@
         }
 
         .edit-mode .service-table input[data-field="customers"],
-        .edit-mode .service-table input[data-field="sales"],
-        .edit-mode .service-table input[data-field="target"]:not([readonly]),
-        .edit-mode .service-table input[data-field="ratio"]:not([readonly]) {
+        .edit-mode .service-table input[data-field="sales"] {
             background: rgba(45, 90, 123, 0.04);
             border-radius: 4px;
             padding: 4px 6px;
         }
 
         .edit-mode .service-table input[data-field="customers"]:hover,
-        .edit-mode .service-table input[data-field="sales"]:hover,
-        .edit-mode .service-table input[data-field="target"]:not([readonly]):hover,
-        .edit-mode .service-table input[data-field="ratio"]:not([readonly]):hover {
+        .edit-mode .service-table input[data-field="sales"]:hover {
             background: rgba(45, 90, 123, 0.08);
         }
 
         .edit-mode .service-table input[data-field="customers"]:focus,
-        .edit-mode .service-table input[data-field="sales"]:focus,
-        .edit-mode .service-table input[data-field="target"]:not([readonly]):focus,
-        .edit-mode .service-table input[data-field="ratio"]:not([readonly]):focus {
+        .edit-mode .service-table input[data-field="sales"]:focus {
             background: rgba(45, 90, 123, 0.08);
             outline: 2px solid var(--nk-accent);
             outline-offset: -1px;
@@ -2398,16 +2400,6 @@
 
         .service-table tr.subtotal-row input {
             font-weight: 600;
-        }
-
-        /* Target ratio coloring */
-        .service-table .ratio-achieved {
-            color: var(--color-green);
-            font-weight: 600;
-        }
-
-        .service-table .ratio-under {
-            color: var(--nk-text-tertiary);
         }
 
         /* Service Budget Section */
@@ -2674,17 +2666,24 @@
 
             body.print-all-mode #serviceCharts .service-budget-meter {
                 display: flex !important;
-                min-width: 80px !important;
-                padding: 4px 12px !important;
-                gap: 2px !important;
+                min-width: 140px !important;
+                padding: 8px 18px !important;
+                gap: 3px !important;
             }
 
             body.print-all-mode #serviceCharts .service-budget-meter-label {
-                font-size: 0.55rem !important;
+                font-size: 0.85rem !important;
+                letter-spacing: 0.06em !important;
             }
 
             body.print-all-mode #serviceCharts .service-budget-meter-value {
-                font-size: 0.85rem !important;
+                font-size: 1.35rem !important;
+                font-weight: 600 !important;
+            }
+
+            body.print-all-mode #serviceCharts .service-budget-meter-divider {
+                width: 55px !important;
+                margin: 1px 0 !important;
             }
 
             body.print-all-mode #serviceCharts .donut-chart-visual {
@@ -2714,13 +2713,14 @@
 
             body.print-all-mode #serviceCharts .donut-chart-legend {
                 flex: 0 0 auto !important;
-                min-width: 230px !important;
+                min-width: auto !important;
                 max-width: 320px !important;
                 gap: 10px !important;
             }
 
             body.print-all-mode #serviceCharts .donut-legend-text {
                 font-size: 0.95rem !important;
+                flex: 0 0 auto !important;
             }
 
             body.print-all-mode #serviceCharts .donut-legend-status {
@@ -2826,7 +2826,8 @@
             }
 
             body.print-all-mode .header-title h1 {
-                font-size: 1.15rem;
+                font-size: 1.6rem;
+                font-weight: 600;
             }
         }
     </style>
@@ -3142,8 +3143,6 @@
                                         <th>サービス名</th>
                                         <th>件数</th>
                                         <th>売上</th>
-                                        <th>目標</th>
-                                        <th>目標比</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3151,71 +3150,51 @@
                                         <td><input type="text" value="カメラガラスコーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="22" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="78435" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="65000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="smartGlass">
                                         <td><input type="text" value="スマホガラスコーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="19" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="67024" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="19000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="quickMaint" data-parent="true">
                                         <td><input type="text" value="クイックメンテナンス（総計）" data-field="name" readonly /></td>
                                         <td><input type="number" value="59" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="113846" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="quickMaint_contact" data-child="quickMaint" class="sub-row">
                                         <td><input type="text" value="└ 接点コーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="29" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="28949" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="text" value="-" data-field="target" readonly /></td>
-                                        <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="quickMaint_other" data-child="quickMaint" class="sub-row">
                                         <td><input type="text" value="└ 外観清掃・その他" data-field="name" readonly /></td>
                                         <td><input type="number" value="13" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="13000" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="text" value="-" data-field="target" readonly /></td>
-                                        <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="cameraNano">
                                         <td><input type="text" value="カメラナノコーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="17" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="71897" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="67600" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="sensorClean">
                                         <td><input type="text" value="センサークリーニング" data-field="name" readonly /></td>
                                         <td><input type="number" value="7" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="20925" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="49000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="smartClean">
                                         <td><input type="text" value="スマホクリーニング" data-field="name" readonly /></td>
                                         <td><input type="number" value="19" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="28336" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="11000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="bulkFilm">
                                         <td><input type="text" value="バルクフィルム" data-field="name" readonly /></td>
                                         <td><input type="number" value="0" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="0" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr class="subtotal-row" id="maintSubtotal">
                                         <td><input type="text" value="メンテ 小計" data-field="name" readonly /></td>
                                         <td><input type="text" value="0" data-field="customers" readonly /></td>
                                         <td><input type="text" value="¥0" data-field="sales" readonly /></td>
-                                        <td><input type="text" value="¥0" data-field="target" readonly /></td>
-                                        <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -3235,8 +3214,6 @@
                                         <th>サービス名</th>
                                         <th>件数</th>
                                         <th>売上</th>
-                                        <th>目標</th>
-                                        <th>目標比</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -3244,29 +3221,21 @@
                                         <td><input type="text" value="カメラ初期設定" data-field="name" readonly /></td>
                                         <td><input type="number" value="4" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="3988" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="3000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="smartSupport">
                                         <td><input type="text" value="スマホ設定サポート" data-field="name" readonly /></td>
                                         <td><input type="number" value="5" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="12248" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="22000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr data-service="smartSetupA">
                                         <td><input type="text" value="スマホ初期設定A" data-field="name" readonly /></td>
                                         <td><input type="number" value="5" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="23798" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="30000" data-field="target" min="0" step="1000" /></td>
-                                        <td><input type="number" value="" data-field="ratio" min="0" step="0.1" /></td>
                                     </tr>
                                     <tr class="subtotal-row" id="setupSubtotal">
                                         <td><input type="text" value="設定 小計" data-field="name" readonly /></td>
                                         <td><input type="text" value="0" data-field="customers" readonly /></td>
                                         <td><input type="text" value="¥0" data-field="sales" readonly /></td>
-                                        <td><input type="text" value="¥0" data-field="target" readonly /></td>
-                                        <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -4539,8 +4508,7 @@
                     if (!key) return;
                     svcTableData[key] = {
                         customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
-                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0,
-                        target: parseInt(row.querySelector('input[data-field="target"]')?.value) || 0
+                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0
                     };
                 });
             });
@@ -4641,10 +4609,8 @@
                             var d = sd.services[key];
                             var custInput = row.querySelector('input[data-field="customers"]');
                             var salesInput = row.querySelector('input[data-field="sales"]');
-                            var targetInput = row.querySelector('input[data-field="target"]');
                             if (custInput && custInput.type === 'number') custInput.value = d.customers || 0;
                             if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
-                            if (targetInput && targetInput.type === 'number') targetInput.value = d.target || 0;
                         });
                     });
                 }
@@ -4728,64 +4694,6 @@
                 if (salesCell) salesCell.value = '¥' + totalSales.toLocaleString();
             }
 
-            // Calculate target and ratio for subtotal
-            const targetMaint = parseInt(document.getElementById('svcTargetMaint').value) || 0;
-            const targetSetup = parseInt(document.getElementById('svcTargetSetup').value) || 0;
-            const target = tableId === 'serviceTable1' ? targetMaint : targetSetup;
-
-            if (subtotalRow) {
-                const targetCell = subtotalRow.querySelector('input[data-field="target"]');
-                const ratioCell = subtotalRow.querySelector('input[data-field="ratio"]');
-                if (targetCell) targetCell.value = '¥' + target.toLocaleString();
-                if (ratioCell) {
-                    if (target > 0) {
-                        const ratio = (totalSales / target * 100).toFixed(1);
-                        ratioCell.value = ratio + '%';
-                        ratioCell.className = parseFloat(ratio) >= 100 ? 'ratio-achieved' : 'ratio-under';
-                    } else {
-                        ratioCell.value = '-';
-                        ratioCell.className = '';
-                    }
-                }
-            }
-
-            // Calculate individual row ratios (non-child, non-subtotal)
-            // 目標と目標比の双方向連動
-            table.querySelectorAll('tbody tr:not(.subtotal-row):not(.sub-row)').forEach(row => {
-                const targetInput = row.querySelector('input[data-field="target"]');
-                const ratioInput = row.querySelector('input[data-field="ratio"]');
-                const salesInput = row.querySelector('input[data-field="sales"]');
-
-                if (!targetInput || !ratioInput || !salesInput) return;
-                if (targetInput.type !== 'number') return;
-
-                const rowTarget = parseInt(targetInput.value) || 0;
-                const rowSales = parseInt(salesInput.value) || 0;
-                const ratioValue = parseFloat(ratioInput.value) || 0;
-
-                // ratioフィールドにフォーカスがある場合は、ratioから目標を逆算
-                const ratioHasFocus = document.activeElement === ratioInput;
-
-                if (ratioHasFocus && ratioValue > 0 && rowSales > 0) {
-                    // 目標比から目標を逆算: target = sales / (ratio / 100)
-                    const calcTarget = Math.round(rowSales / (ratioValue / 100));
-                    targetInput.value = calcTarget;
-                    ratioInput.className = ratioValue >= 100 ? 'ratio-achieved' : 'ratio-under';
-                } else if (rowTarget > 0) {
-                    // 目標から目標比を計算
-                    const ratio = (rowSales / rowTarget * 100).toFixed(1);
-                    ratioInput.value = ratio;
-                    ratioInput.className = parseFloat(ratio) >= 100 ? 'ratio-achieved' : 'ratio-under';
-                } else if (ratioValue > 0 && rowSales > 0) {
-                    // 目標が0で、既にratioに値がある場合も逆算
-                    const calcTarget = Math.round(rowSales / (ratioValue / 100));
-                    targetInput.value = calcTarget;
-                    ratioInput.className = ratioValue >= 100 ? 'ratio-achieved' : 'ratio-under';
-                } else {
-                    ratioInput.value = '';
-                    ratioInput.className = '';
-                }
-            });
         }
 
         // Get service data summary
@@ -5123,26 +5031,16 @@
         function saveServiceData() {
             const tableData = {};
 
-            // Save service table 1 data
-            document.querySelectorAll('#serviceTable1 tbody tr:not(.subtotal-row)').forEach(row => {
-                const key = row.dataset.service;
-                if (!key) return;
-                tableData[key] = {
-                    customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
-                    sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0,
-                    target: parseInt(row.querySelector('input[data-field="target"]')?.value) || 0
-                };
-            });
-
-            // Save service table 2 data
-            document.querySelectorAll('#serviceTable2 tbody tr:not(.subtotal-row)').forEach(row => {
-                const key = row.dataset.service;
-                if (!key) return;
-                tableData[key] = {
-                    customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
-                    sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0,
-                    target: parseInt(row.querySelector('input[data-field="target"]')?.value) || 0
-                };
+            // Save service table 1 & 2 data
+            ['serviceTable1', 'serviceTable2'].forEach(tableId => {
+                document.querySelectorAll(`#${tableId} tbody tr:not(.subtotal-row)`).forEach(row => {
+                    const key = row.dataset.service;
+                    if (!key) return;
+                    tableData[key] = {
+                        customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
+                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0
+                    };
+                });
             });
 
             const saveObject = {
@@ -5183,11 +5081,9 @@
                             const data = parsed.services[key];
                             const custInput = row.querySelector('input[data-field="customers"]');
                             const salesInput = row.querySelector('input[data-field="sales"]');
-                            const targetInput = row.querySelector('input[data-field="target"]');
 
                             if (custInput && custInput.type === 'number') custInput.value = data.customers || 0;
                             if (salesInput && salesInput.type === 'number') salesInput.value = data.sales || 0;
-                            if (targetInput && targetInput.type === 'number') targetInput.value = data.target || 0;
                         });
                     });
                 }
