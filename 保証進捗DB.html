@@ -925,7 +925,7 @@
         .budget-bar {
             height: 100%;
             border-radius: 12px;
-            background: #5C4A3D;
+            background: #6BBF59;
             transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
         }
@@ -1532,15 +1532,17 @@
                 display: none !important;
             }
 
-            /* view-content ラッパーをレイアウトに対して透過にする（印刷時・通常印刷のみ） */
+            /* 通常印刷は display:contents 非依存にする（print エンジン差異回避） */
+            body:not(.print-all-mode) .right-panel > .view-content {
+                display: none !important;
+            }
             body:not(.print-all-mode) .right-panel > .view-content.active,
             body:not(.print-all-mode) .preview-mode .right-panel > .view-content.active {
-                display: contents !important;
-            }
-
-            body:not(.print-all-mode) .right-panel > .view-content:not(.active),
-            body:not(.print-all-mode) .preview-mode .right-panel > .view-content:not(.active) {
-                display: none !important;
+                display: block !important;
+                width: 100% !important;
+                font-size: 0 !important;
+                letter-spacing: 0 !important;
+                word-spacing: 0 !important;
             }
 
             .right-panel,
@@ -1548,9 +1550,6 @@
                 display: block !important;
                 padding: 0 12px !important;
                 background: #FAF7F2 !important;
-                font-size: 0 !important;
-                letter-spacing: 0 !important;
-                word-spacing: 0 !important;
                 grid-template-columns: none !important;
                 grid-template-rows: none !important;
                 gap: 0 !important;
@@ -1592,6 +1591,7 @@
             .donut-chart-visual canvas {
                 width: 105px !important;
                 height: 105px !important;
+                display: block !important;
             }
 
             .donut-chart-center {
@@ -1937,6 +1937,7 @@
             .chart-wrapper canvas {
                 width: 100% !important;
                 height: 100% !important;
+                display: block !important;
             }
 
             /* ===== ROW 3: Progress Panel + Budget (約150px) ===== */
@@ -2001,6 +2002,15 @@
             .progress-bar {
                 height: 12px;
                 border-radius: 6px;
+            }
+
+            /* PDF保存時に box-shadow が緑塗りつぶしになる問題の回避 */
+            .progress-bar.achieved {
+                box-shadow: none !important;
+            }
+
+            .progress-milestone.reached {
+                box-shadow: none !important;
             }
 
             .progress-milestone {
@@ -2074,12 +2084,17 @@
             .budget-bar {
                 height: 16px;
                 border-radius: 8px;
-                background: #5C4A3D !important;
+                background: #6BBF59 !important;
                 overflow: visible !important;
             }
 
             .budget-bar.achieved {
                 background: #5A8A5A !important;
+                box-shadow: none !important;
+            }
+
+            .budget-bar.over-achieved {
+                box-shadow: none !important;
             }
 
             .budget-bar-label {
@@ -2134,11 +2149,11 @@
                 display: none !important;
             }
 
-            .view-content {
+            /* 左パネルの view 切替だけを対象化（右パネルは上の専用ルールで制御） */
+            body:not(.print-all-mode) .left-panel > .view-content {
                 display: none !important;
             }
-
-            .view-content.active {
+            body:not(.print-all-mode) .left-panel > .view-content.active {
                 display: block !important;
             }
         }
@@ -2465,160 +2480,11 @@
         }
 
         .service-progress-bar-fill.warm-dark {
-            background: #5C4A3D;
+            background: #6BBF59;
         }
 
         .service-progress-bar-fill.achieved {
             background: var(--color-green) !important;
-        }
-
-        /* ===== Review Page ===== */
-        #reviewView {
-            display: none;
-            flex-direction: column;
-            gap: 24px;
-            padding: 28px 32px;
-            max-width: 1200px;
-        }
-
-        #reviewView.active {
-            display: flex;
-        }
-
-        .review-toolbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .review-back-btn {
-            font-size: 13px !important;
-            padding: 8px 16px !important;
-            color: var(--nk-text-secondary) !important;
-        }
-
-        .review-print-btn {
-            font-size: 13px !important;
-            padding: 8px 20px !important;
-        }
-
-        .review-header {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--nk-border-light);
-        }
-
-        .review-header input {
-            font-family: var(--font-sans);
-            font-size: 14px;
-            color: var(--nk-text);
-            border: 1px solid var(--nk-border);
-            border-radius: var(--radius-sm);
-            padding: 8px 12px;
-            background: var(--nk-bg-white);
-            transition: border-color var(--transition-fast);
-        }
-
-        .review-header input:first-child {
-            flex: 1;
-            font-family: var(--font-serif);
-            font-size: 18px;
-            font-weight: 500;
-        }
-
-        .review-header input:last-child {
-            width: 160px;
-        }
-
-        .review-header input:focus {
-            outline: none;
-            border-color: var(--nk-accent);
-            box-shadow: 0 0 0 3px var(--nk-accent-light);
-        }
-
-        .review-section {
-            background: var(--nk-bg-white);
-            border: 1px solid var(--nk-border-light);
-            border-radius: var(--radius-lg);
-            padding: 20px 24px;
-            box-shadow: var(--shadow-sm);
-        }
-
-        .review-section h2 {
-            font-family: var(--font-serif);
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--nk-text);
-            margin-bottom: 16px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid var(--nk-border-light);
-        }
-
-        .review-category {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--nk-text-secondary);
-            margin-top: 16px;
-            margin-bottom: 8px;
-        }
-
-        .review-category:first-of-type {
-            margin-top: 0;
-        }
-
-        .category-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 3px;
-            flex-shrink: 0;
-        }
-
-        .category-warranty .category-dot {
-            background: #C9A66B;
-        }
-
-        .category-support .category-dot {
-            background: var(--nk-accent);
-        }
-
-        .category-service .category-dot {
-            background: var(--nk-accent-warm);
-        }
-
-        .review-textarea {
-            width: 100%;
-            min-height: 120px;
-            padding: 12px 14px;
-            border: 1px solid var(--nk-border);
-            border-radius: var(--radius-md);
-            background: var(--nk-bg-secondary);
-            font-family: var(--font-sans);
-            font-size: 13px;
-            line-height: 1.7;
-            color: var(--nk-text);
-            resize: vertical;
-            transition: border-color var(--transition-fast);
-        }
-
-        .review-textarea:focus {
-            outline: none;
-            border-color: var(--nk-accent);
-            box-shadow: 0 0 0 3px var(--nk-accent-light);
-            background: var(--nk-bg-white);
-        }
-
-        .review-textarea::placeholder {
-            color: var(--nk-text-quaternary);
-        }
-
-        /* Footer mode switching */
-        .footer-review {
-            display: none;
         }
 
         /* ===== Print All Mode ===== */
@@ -2865,59 +2731,6 @@
                 border: 1px solid rgba(26, 24, 20, 0.08) !important;
                 font-size: 10px !important;
                 grid-column: auto !important;
-            }
-
-            /* --- 振り返りページ --- */
-            body.print-all-mode #reviewView {
-                display: flex !important;
-                page-break-before: always !important;
-                break-before: page !important;
-            }
-
-            body.print-all-mode #reviewView .review-toolbar {
-                display: none !important;
-            }
-
-            body.print-all-mode #reviewView .review-header {
-                padding-bottom: 12px;
-            }
-
-            body.print-all-mode #reviewView .review-header input {
-                border: none;
-                background: transparent;
-                padding: 0;
-            }
-
-            body.print-all-mode #reviewView .review-header input:first-child {
-                font-size: 15px;
-            }
-
-            body.print-all-mode #reviewView .review-textarea {
-                border: none;
-                background: transparent;
-                padding: 4px 0;
-                min-height: auto;
-                resize: none;
-                white-space: pre-wrap;
-                font-size: 11px;
-                line-height: 1.6;
-            }
-
-            body.print-all-mode #reviewView .review-section {
-                box-shadow: none;
-                padding: 12px 16px;
-                border: 1px solid rgba(26, 24, 20, 0.1);
-            }
-
-            body.print-all-mode #reviewView .review-section h2 {
-                font-size: 13px;
-                margin-bottom: 10px;
-            }
-
-            body.print-all-mode #reviewView .review-category {
-                font-size: 11px;
-                margin-top: 10px;
-                margin-bottom: 4px;
             }
 
             body.print-all-mode .view-toggle {
@@ -3215,15 +3028,15 @@
                         <div class="service-budget-grid" style="grid-template-columns: repeat(3, 1fr);">
                             <div class="service-budget-item">
                                 <label>全体予算</label>
-                                <input type="number" id="svcBudgetBase" value="580000" min="0" step="1000" />
+                                <input type="number" id="svcBudgetBase" value="304000" min="0" step="1000" />
                             </div>
                             <div class="service-budget-item">
                                 <label>メンテ目標</label>
-                                <input type="number" id="svcTargetMaint" value="435000" min="0" step="1000" />
+                                <input type="number" id="svcTargetMaint" value="281000" min="0" step="1000" />
                             </div>
                             <div class="service-budget-item">
                                 <label>設定目標</label>
-                                <input type="number" id="svcTargetSetup" value="145000" min="0" step="1000" />
+                                <input type="number" id="svcTargetSetup" value="55000" min="0" step="1000" />
                             </div>
                         </div>
                     </div>
@@ -3249,63 +3062,63 @@
                                     <tr data-service="cameraGlass">
                                         <td><input type="text" value="カメラガラスコーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="22" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="71280" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="78435" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="65000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="smartGlass">
                                         <td><input type="text" value="スマホガラスコーティング" data-field="name" readonly /></td>
-                                        <td><input type="number" value="25" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="82500" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="19" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="67024" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="19000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="quickMaint" data-parent="true">
                                         <td><input type="text" value="クイックメンテナンス（総計）" data-field="name" readonly /></td>
-                                        <td><input type="number" value="35" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="59" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="113846" data-field="sales" min="0" step="1000" /></td>
                                         <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="quickMaint_contact" data-child="quickMaint" class="sub-row">
                                         <td><input type="text" value="└ 接点コーティング" data-field="name" readonly /></td>
-                                        <td><input type="number" value="11" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="35849" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="29" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="28949" data-field="sales" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="target" readonly /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="quickMaint_other" data-child="quickMaint" class="sub-row">
                                         <td><input type="text" value="└ 外観清掃・その他" data-field="name" readonly /></td>
-                                        <td><input type="number" value="4" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="6100" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="13" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="13000" data-field="sales" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="target" readonly /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="cameraNano">
                                         <td><input type="text" value="カメラナノコーティング" data-field="name" readonly /></td>
-                                        <td><input type="number" value="7" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="46200" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="17" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="71897" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="67600" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="sensorClean">
                                         <td><input type="text" value="センサークリーニング" data-field="name" readonly /></td>
-                                        <td><input type="number" value="14" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="46200" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="7" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="20925" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="49000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="smartClean">
                                         <td><input type="text" value="スマホクリーニング" data-field="name" readonly /></td>
-                                        <td><input type="number" value="6" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="19800" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="19" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="28336" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="11000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="bulkFilm">
                                         <td><input type="text" value="バルクフィルム" data-field="name" readonly /></td>
-                                        <td><input type="number" value="2" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="3960" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="0" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="0" data-field="sales" min="0" step="1000" /></td>
                                         <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
@@ -3341,23 +3154,23 @@
                                 <tbody>
                                     <tr data-service="cameraSetup">
                                         <td><input type="text" value="カメラ初期設定" data-field="name" readonly /></td>
-                                        <td><input type="number" value="29" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="95700" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="4" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="3988" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="3000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="smartSupport">
                                         <td><input type="text" value="スマホ設定サポート" data-field="name" readonly /></td>
-                                        <td><input type="number" value="3" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="9900" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="5" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="12248" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="22000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr data-service="smartSetupA">
                                         <td><input type="text" value="スマホ初期設定A" data-field="name" readonly /></td>
-                                        <td><input type="number" value="2" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="6600" data-field="sales" min="0" step="1000" /></td>
-                                        <td><input type="number" value="0" data-field="target" min="0" step="1000" /></td>
+                                        <td><input type="number" value="5" data-field="customers" min="0" /></td>
+                                        <td><input type="number" value="23798" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="30000" data-field="target" min="0" step="1000" /></td>
                                         <td><input type="text" value="-" data-field="ratio" readonly /></td>
                                     </tr>
                                     <tr class="subtotal-row" id="setupSubtotal">
@@ -3550,59 +3363,11 @@
         </div>
 
         <!-- Review View -->
-        <div id="reviewView">
-            <div class="review-toolbar">
-                <button class="btn btn-secondary review-back-btn" onclick="exitReviewMode()">← ダッシュボードに戻る</button>
-                <button class="btn btn-primary review-print-btn" onclick="printAllPages()">印刷（全ページ）</button>
-            </div>
-            <div class="review-header">
-                <input type="text" id="reviewMonth" />
-                <input type="text" id="reviewAuthor" value="本間" />
-            </div>
-
-            <div class="review-section">
-                <h2>振り返り</h2>
-
-                <div class="review-category category-warranty">
-                    <span class="category-dot"></span>5年間保証
-                </div>
-                <textarea class="review-textarea" id="reviewWarranty" placeholder="添付率・件数の分析..."></textarea>
-
-                <div class="review-category category-support">
-                    <span class="category-dot"></span>中古まるサポ
-                </div>
-                <textarea class="review-textarea" id="reviewSupport" placeholder="添付率・件数の分析..."></textarea>
-
-                <div class="review-category category-service">
-                    <span class="category-dot"></span>有料サービス
-                </div>
-                <textarea class="review-textarea" id="reviewService" placeholder="売上・客数の分析..."></textarea>
-            </div>
-
-            <div class="review-section">
-                <h2>次のアクション</h2>
-
-                <div class="review-category category-warranty">
-                    <span class="category-dot"></span>5年間保証 / 中古まるサポ
-                </div>
-                <textarea class="review-textarea" id="actionWarranty" placeholder="次月の施策..."></textarea>
-
-                <div class="review-category category-service">
-                    <span class="category-dot"></span>有料サービス
-                </div>
-                <textarea class="review-textarea" id="actionService" placeholder="次月の施策..."></textarea>
-            </div>
-        </div>
-
         <!-- Footer Actions -->
         <div class="footer-actions" id="footerActions">
             <button class="btn btn-danger footer-normal" onclick="resetData()">リセット</button>
             <button class="btn btn-primary footer-normal" onclick="saveData()">保存</button>
             <button class="btn btn-secondary footer-normal" onclick="window.print()">印刷</button>
-            <button class="btn btn-secondary footer-normal" onclick="enterReviewMode()">振り返り</button>
-            <button class="btn btn-secondary footer-review" onclick="exitReviewMode()">戻る</button>
-            <button class="btn btn-primary footer-review" onclick="saveData()">保存</button>
-            <button class="btn btn-secondary footer-review" onclick="printAllPages()">印刷（全ページ）</button>
         </div>
     </div>
 
@@ -3613,7 +3378,7 @@
         // Global state
         let isEditMode = true;
         let isItemsUnlocked = false;
-        let isReviewMode = false;
+
         let achievementChart = null;
         let comparisonChart = null;
         let overallDonutChart = null;
@@ -3649,11 +3414,11 @@
             // まず localStorage からロード（即座に表示）
             loadData();
             loadServiceData();
-            loadReviewData();
+
             loadViewState();
             updateDate();
             setupEventListeners();
-            setupReviewTextareas();
+
             calculateAll();
             calculateServiceAll();
             initCharts();
@@ -3684,7 +3449,6 @@
                 if (document.body.classList.contains('print-all-mode')) {
                     document.getElementById('warrantyCharts').classList.add('active');
                     document.getElementById('serviceCharts').classList.add('active');
-                    document.getElementById('reviewView').classList.add('active');
                     document.querySelector('.main-content').style.display = '';
                 }
 
@@ -3736,14 +3500,6 @@
                     // 元のビュー状態に復元
                     document.getElementById('warrantyCharts').classList.toggle('active', currentView === 'warranty');
                     document.getElementById('serviceCharts').classList.toggle('active', currentView === 'service');
-                    // 振り返りモード中なら reviewView は active のまま、そうでなければ外す
-                    if (!isReviewMode) {
-                        document.getElementById('reviewView').classList.remove('active');
-                    }
-                    // 振り返りモード中は main-content を非表示に戻す
-                    if (isReviewMode) {
-                        document.querySelector('.main-content').style.display = 'none';
-                    }
                 }
 
                 // 印刷後に元の設定に戻す
@@ -4647,19 +4403,6 @@
 
         // Reset data (ロック項目以外をクリア)
         function resetData() {
-            if (isReviewMode) {
-                if (confirm('振り返りデータをリセットしますか？')) {
-                    document.getElementById('reviewMonth').value = '';
-                    document.getElementById('reviewAuthor').value = '';
-                    document.getElementById('reviewWarranty').value = '';
-                    document.getElementById('reviewSupport').value = '';
-                    document.getElementById('reviewService').value = '';
-                    document.getElementById('actionWarranty').value = '';
-                    document.getElementById('actionService').value = '';
-                    showToast('振り返りデータをリセットしました');
-                }
-                return;
-            }
             if (currentView === 'warranty') {
                 if (confirm('保証データをリセットしますか？\n（項目名・目標・予算はそのまま保持されます）')) {
                     document.querySelectorAll('.data-table input[data-field="actual"]').forEach(input => {
@@ -4811,9 +4554,9 @@
             if (cloud.serviceDashboardData) {
                 var sd = cloud.serviceDashboardData;
                 if (sd.budget) {
-                    document.getElementById('svcBudgetBase').value = sd.budget.budgetBase ?? 580000;
-                    document.getElementById('svcTargetMaint').value = sd.budget.targetMaint ?? 435000;
-                    document.getElementById('svcTargetSetup').value = sd.budget.targetSetup ?? 145000;
+                    document.getElementById('svcBudgetBase').value = sd.budget.budgetBase ?? 304000;
+                    document.getElementById('svcTargetMaint').value = sd.budget.targetMaint ?? 281000;
+                    document.getElementById('svcTargetSetup').value = sd.budget.targetSetup ?? 55000;
                 }
                 if (sd.services) {
                     ['serviceTable1', 'serviceTable2'].forEach(function(tableId) {
@@ -4870,9 +4613,6 @@
 
             // サービスデータも保存
             saveServiceData();
-
-            // 振り返りデータも保存
-            saveReviewData();
 
             // クラウドに同期
             syncToCloud().then(function(result) {
@@ -5328,9 +5068,9 @@
 
                 // Restore budget settings
                 if (parsed.budget) {
-                    document.getElementById('svcBudgetBase').value = parsed.budget.budgetBase ?? 580000;
-                    document.getElementById('svcTargetMaint').value = parsed.budget.targetMaint ?? 435000;
-                    document.getElementById('svcTargetSetup').value = parsed.budget.targetSetup ?? 145000;
+                    document.getElementById('svcBudgetBase').value = parsed.budget.budgetBase ?? 304000;
+                    document.getElementById('svcTargetMaint').value = parsed.budget.targetMaint ?? 281000;
+                    document.getElementById('svcTargetSetup').value = parsed.budget.targetSetup ?? 55000;
                 }
 
                 // Restore service table data
@@ -5364,72 +5104,6 @@
             }
         }
 
-        // ===== REVIEW MODE FUNCTIONS =====
-
-        function enterReviewMode() {
-            isReviewMode = true;
-            document.querySelector('.main-content').style.display = 'none';
-            document.getElementById('reviewView').classList.add('active');
-            toggleFooterButtons('review');
-            // セグメントコントロールを非表示
-            document.querySelector('.view-toggle').style.display = 'none';
-            // ヘッダーアクション（編集/プレビュー）を非表示
-            document.querySelector('.header-actions').style.display = 'none';
-            // タイトル更新
-            document.querySelector('.header-title h1').textContent = '月次振り返り';
-            // サービスチャートを事前初期化（印刷用）
-            ensureServiceChartsInitialized();
-        }
-
-        function exitReviewMode() {
-            isReviewMode = false;
-            document.querySelector('.main-content').style.display = '';
-            document.getElementById('reviewView').classList.remove('active');
-            toggleFooterButtons('normal');
-            // セグメントコントロールを復元
-            document.querySelector('.view-toggle').style.display = '';
-            // ヘッダーアクションを復元
-            document.querySelector('.header-actions').style.display = '';
-            // タイトル復元
-            const title = currentView === 'warranty' ? '保証 進捗ダッシュボード' : '有料サービス 進捗ダッシュボード';
-            document.querySelector('.header-title h1').textContent = title;
-        }
-
-        function toggleFooterButtons(mode) {
-            document.querySelectorAll('.footer-normal').forEach(function(btn) {
-                btn.style.display = mode === 'normal' ? '' : 'none';
-            });
-            document.querySelectorAll('.footer-review').forEach(function(btn) {
-                btn.style.display = mode === 'review' ? '' : 'none';
-            });
-        }
-
-        function printAllPages() {
-            ensureServiceChartsInitialized();
-            document.body.classList.add('print-all-mode');
-
-            // 事前に全ビューを表示状態にする（beforeprint任せにしない）
-            document.getElementById('warrantyCharts').classList.add('active');
-            document.getElementById('serviceCharts').classList.add('active');
-            document.getElementById('reviewView').classList.add('active');
-            document.querySelector('.main-content').style.display = 'block';
-
-            // チャートレンダリング完了待ち
-            requestAnimationFrame(function() {
-                setTimeout(function() {
-                    // 全チャートをリサイズ
-                    [achievementChart, comparisonChart, overallDonutChart,
-                     serviceDonutChart, serviceBreakdownChart, serviceAchievementChart].forEach(function(chart) {
-                        if (chart) {
-                            chart.resize();
-                            chart.update('none');
-                        }
-                    });
-                    window.print();
-                }, 300);
-            });
-        }
-
         function ensureServiceChartsInitialized() {
             if (!serviceChartsInitialized && !serviceChartsInitializing) {
                 serviceChartsInitializing = true;
@@ -5447,68 +5121,6 @@
                     sc.classList.toggle('active', currentView === 'service');
                 }
             }
-        }
-
-        function saveReviewData() {
-            var data = {
-                month: document.getElementById('reviewMonth').value,
-                author: document.getElementById('reviewAuthor').value,
-                reviewWarranty: document.getElementById('reviewWarranty').value,
-                reviewSupport: document.getElementById('reviewSupport').value,
-                reviewService: document.getElementById('reviewService').value,
-                actionWarranty: document.getElementById('actionWarranty').value,
-                actionService: document.getElementById('actionService').value,
-                savedAt: new Date().toISOString()
-            };
-            localStorage.setItem('reviewDashboardData', JSON.stringify(data));
-        }
-
-        function getDefaultReviewMonth() {
-            var now = new Date();
-            var y = String(now.getFullYear()).slice(-2);
-            var m = ('0' + (now.getMonth() + 1)).slice(-2);
-            return y + '/' + m + '月 結果と分析';
-        }
-
-        function loadReviewData() {
-            var saved = localStorage.getItem('reviewDashboardData');
-            var monthEl = document.getElementById('reviewMonth');
-            var authorEl = document.getElementById('reviewAuthor');
-
-            if (!saved) {
-                // デフォルト値を設定
-                monthEl.value = getDefaultReviewMonth();
-                authorEl.value = authorEl.value || '本間';
-                return;
-            }
-            try {
-                var data = JSON.parse(saved);
-                monthEl.value = data.month || getDefaultReviewMonth();
-                authorEl.value = data.author || '本間';
-                document.getElementById('reviewWarranty').value = data.reviewWarranty || '';
-                document.getElementById('reviewSupport').value = data.reviewSupport || '';
-                document.getElementById('reviewService').value = data.reviewService || '';
-                document.getElementById('actionWarranty').value = data.actionWarranty || '';
-                document.getElementById('actionService').value = data.actionService || '';
-            } catch (e) {
-                console.error('Failed to load review data:', e);
-                monthEl.value = getDefaultReviewMonth();
-            }
-        }
-
-        // テキストエリアの自動伸長
-        function setupReviewTextareas() {
-            document.querySelectorAll('.review-textarea').forEach(function(textarea) {
-                textarea.addEventListener('input', function() {
-                    this.style.height = 'auto';
-                    this.style.height = this.scrollHeight + 'px';
-                });
-                // 初期値がある場合は高さを調整
-                if (textarea.value) {
-                    textarea.style.height = 'auto';
-                    textarea.style.height = textarea.scrollHeight + 'px';
-                }
-            });
         }
 
         // Show toast
