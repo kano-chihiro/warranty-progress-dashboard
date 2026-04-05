@@ -2,6 +2,7 @@ const DOC_KEY_TO_TYPE = Object.freeze({
   warrantyDashboardData: "warranty",
   serviceDashboardData: "service",
   reviewDashboardData: "review",
+  hardwareDashboardData: "hardware",
   dashboardViewState: "view_state",
 });
 
@@ -9,20 +10,46 @@ const DOC_TYPE_TO_KEY = Object.freeze({
   warranty: "warrantyDashboardData",
   service: "serviceDashboardData",
   review: "reviewDashboardData",
+  hardware: "hardwareDashboardData",
   view_state: "dashboardViewState",
 });
 
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-  "Access-Control-Allow-Headers": "Content-Type",
-};
+const ALLOWED_ORIGINS = [
+  "https://db.noesiskai.com",
+  "http://localhost:8788",
+];
 
-function jsonResponse(data, status = 200) {
+function getCorsHeaders(request) {
+  const origin = request.headers.get("Origin") || "";
+  const allowed = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    "Access-Control-Allow-Origin": allowed,
+    "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Vary": "Origin",
+  };
+}
+
+function isAuthenticated(request, env) {
+  // Cloudflare Access JWT (Phase 2) — Access を通過したリクエストに自動付与
+  if (request.headers.get("Cf-Access-Jwt-Assertion")) {
+    return true;
+  }
+  // Bearer トークン (Phase 1 過渡的措置 — Access 導入後に撤去可能)
+  if (env.API_SECRET_TOKEN) {
+    const auth = request.headers.get("Authorization");
+    if (auth && auth.startsWith("Bearer ")) {
+      return auth.slice(7) === env.API_SECRET_TOKEN;
+    }
+  }
+  return false;
+}
+
+function jsonResponse(data, status = 200, request) {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
-      ...CORS_HEADERS,
+      ...getCorsHeaders(request),
       "Content-Type": "application/json; charset=utf-8",
       "Cache-Control": "no-store",
     },
@@ -38,6 +65,7 @@ async function getSnapshot(db) {
     warrantyDashboardData: null,
     serviceDashboardData: null,
     reviewDashboardData: null,
+    hardwareDashboardData: null,
     dashboardViewState: "warranty",
     meta: {
       versions: {},
@@ -78,32 +106,35 @@ function collectDocsFromBody(body) {
   return docs;
 }
 
-export async function onRequestOptions() {
+export async function onRequestOptions(context) {
   return new Response(null, {
     status: 204,
-    headers: CORS_HEADERS,
+    headers: getCorsHeaders(context.request),
   });
 }
 
 export async function onRequestGet(context) {
+  if (!isAuthenticated(context.request, context.env)) {
+    return jsonResponse({ ok: false, error: "UNAUTHORIZED" }, 401, context.request);
+  }
+
   const snapshot = await getSnapshot(context.env.warranty_progress_db);
-  return jsonResponse({
-    ok: true,
-    ...snapshot,
-  });
+  return jsonResponse({ ok: true, ...snapshot }, 200, context.request);
 }
 
 export async function onRequestPost(context) {
+  if (!isAuthenticated(context.request, context.env)) {
+    return jsonResponse({ ok: false, error: "UNAUTHORIZED" }, 401, context.request);
+  }
+
   let body;
   try {
     body = await context.request.json();
   } catch {
     return jsonResponse(
-      {
-        ok: false,
-        error: "INVALID_JSON",
-      },
+      { ok: false, error: "INVALID_JSON" },
       400,
+      context.request,
     );
   }
 
@@ -114,9 +145,10 @@ export async function onRequestPost(context) {
         ok: false,
         error: "NO_SYNC_TARGET",
         message:
-          "At least one of warrantyDashboardData / serviceDashboardData / reviewDashboardData / dashboardViewState is required.",
+          "At least one of warrantyDashboardData / serviceDashboardData / reviewDashboardData / hardwareDashboardData / dashboardViewState is required.",
       },
       400,
+      context.request,
     );
   }
 
@@ -149,13 +181,9 @@ export async function onRequestPost(context) {
   if (conflicts.length > 0) {
     const latest = await getSnapshot(db);
     return jsonResponse(
-      {
-        ok: false,
-        error: "VERSION_CONFLICT",
-        conflicts,
-        latest,
-      },
+      { ok: false, error: "VERSION_CONFLICT", conflicts, latest },
       409,
+      context.request,
     );
   }
 
@@ -177,8 +205,5 @@ export async function onRequestPost(context) {
   await db.batch(statements);
 
   const snapshot = await getSnapshot(db);
-  return jsonResponse({
-    ok: true,
-    ...snapshot,
-  });
+  return jsonResponse({ ok: true, ...snapshot }, 200, context.request);
 }

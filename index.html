@@ -493,6 +493,25 @@
             display: inline;
         }
 
+        /* 目標添付率: 数値のみ編集、%は固定表示 */
+        .cell-with-percent {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .cell-with-percent input[data-field="targetRate"] {
+            flex: 1;
+            min-width: 0;
+        }
+        .percent-suffix {
+            font-size: 0.75rem;
+            color: var(--text-tertiary);
+            flex-shrink: 0;
+            font-weight: 500;
+            user-select: none;
+            pointer-events: none;
+        }
+
         /* Chart Card */
         .chart-card {
             background: var(--nk-bg-white);
@@ -636,7 +655,8 @@
         }
 
         .service-budget-meter-value {
-            font-family: var(--font-mono);
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
             font-size: 0.95rem;
             font-weight: 500;
             line-height: 1.2;
@@ -685,6 +705,13 @@
             font-weight: 500;
             color: var(--nk-text);
             line-height: 1;
+        }
+
+        /* 有料サービス・ハードのドーナツ中央数値はサンセリフに統一 */
+        #serviceCharts .donut-chart-value,
+        #hardwareCharts .donut-chart-value {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
         }
 
         .donut-chart-label {
@@ -1406,7 +1433,7 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: auto auto auto auto;
-            gap: 20px;
+            gap: 22px;
             padding: 28px 32px;
             background: var(--nk-bg);
         }
@@ -1922,7 +1949,7 @@
                 line-height: 1 !important;
                 font-weight: 600 !important;
                 white-space: nowrap !important;
-                font-family: var(--font-mono) !important;
+                font-family: var(--font-sans) !important;
             }
 
             #serviceCharts .service-stat-label,
@@ -2277,6 +2304,34 @@
             display: block;
         }
 
+        /* 右パネル内のカード間の縦余白（編集モード・カード本体サイズは維持） */
+        .right-panel > .view-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            min-height: 0;
+        }
+        .right-panel > .view-content.active > .chart-card {
+            flex: 0 0 auto;
+        }
+
+        /* 左パネル内のタイル間の縦余白（外側パディングは維持） */
+        .left-panel > .view-content.active {
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            min-height: 0;
+        }
+        .left-panel > .view-content.active > .budget-section {
+            margin-bottom: 0;
+        }
+        .left-panel > .view-content.active > .service-budget-section {
+            margin-bottom: 0;
+        }
+        .left-panel > .view-content.active > .hardware-budget-section {
+            margin-bottom: 0;
+        }
+
         /* ===== Service Table Styles ===== */
         .service-table {
             width: 100%;
@@ -2386,16 +2441,20 @@
             font-size: 12px;
         }
 
-        /* Subtotal row */
+        /* Subtotal row — 行のベージュと入力の編集色が重ならないよう白基調に統一 */
         .service-table tr.subtotal-row {
             border-top: 2px solid var(--nk-border-medium);
         }
 
         .service-table tr.subtotal-row td {
             font-weight: 600;
-            background: var(--nk-bg-secondary);
+            background: var(--nk-bg-white);
             border-bottom: 2px solid var(--nk-border);
             padding: 10px 12px;
+        }
+
+        .service-table tbody tr.subtotal-row:hover td {
+            background: rgba(26, 24, 20, 0.02);
         }
 
         .service-table tr.subtotal-row input {
@@ -2437,7 +2496,8 @@
             padding: 8px 10px;
             border: 1px solid var(--nk-border);
             border-radius: 6px;
-            font-family: var(--font-mono);
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
             font-size: 13px;
             color: var(--nk-text);
             background: var(--nk-bg-white);
@@ -2476,7 +2536,8 @@
         }
 
         .service-stat-value {
-            font-family: var(--font-mono);
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
             font-size: 28px;
             font-weight: 600;
             line-height: 1.2;
@@ -2770,7 +2831,7 @@
                 line-height: 1 !important;
                 font-weight: 600 !important;
                 white-space: nowrap !important;
-                font-family: var(--font-mono) !important;
+                font-family: var(--font-sans) !important;
             }
 
             body.print-all-mode #serviceCharts .service-stat-label {
@@ -2829,6 +2890,227 @@
                 font-size: 1.6rem;
                 font-weight: 600;
             }
+
+            body.print-all-mode #hardwareCharts {
+                display: block !important;
+                page-break-before: always;
+                break-before: page;
+            }
+            body.print-all-mode #hardwareCharts .chart-card,
+            body.print-all-mode #hardwareCharts .stats-grid,
+            body.print-all-mode #hardwareCharts .donut-chart-container {
+                break-inside: avoid;
+                page-break-inside: avoid;
+            }
+        }
+
+        /* ===== HARDWARE VIEW STYLES ===== */
+        .hardware-budget-section {
+            background: linear-gradient(135deg, rgba(139, 115, 85, 0.06), rgba(196, 163, 90, 0.06));
+            border: 1px solid rgba(139, 115, 85, 0.15);
+            border-radius: var(--radius-lg);
+            padding: 16px 20px;
+            margin-bottom: 16px;
+        }
+        .hardware-budget-title {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            font-weight: 600;
+            color: #8B7355;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+        .hardware-budget-grid {
+            display: grid;
+            gap: 12px;
+        }
+        .hardware-budget-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .hardware-budget-item label {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            font-weight: 500;
+            color: var(--nk-text-secondary);
+        }
+        .hardware-budget-item input,
+        .hardware-budget-item select {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 6px 10px;
+            border: 1px solid var(--nk-border);
+            border-radius: var(--radius-md);
+            background: var(--nk-bg-white);
+            color: var(--nk-text);
+            transition: border-color var(--transition-fast);
+        }
+        .hardware-budget-item input:focus,
+        .hardware-budget-item select:focus {
+            outline: none;
+            border-color: #8B7355;
+        }
+
+        .hardware-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-sans);
+            font-size: 13px;
+        }
+        .hardware-table th {
+            padding: 8px 10px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--nk-text-secondary);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--nk-border);
+        }
+        .hardware-table td {
+            padding: 6px 10px;
+            border-bottom: 1px solid var(--nk-border-light);
+        }
+        .hardware-table input[type="number"] {
+            width: 100%;
+            padding: 5px 8px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-sm);
+            background: transparent;
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 13px;
+            text-align: right;
+            transition: all var(--transition-fast);
+        }
+        .hardware-table input[type="number"]:hover {
+            border-color: var(--nk-border);
+            background: var(--nk-bg-white);
+        }
+        .hardware-table input[type="number"]:focus {
+            outline: none;
+            border-color: #8B7355;
+            background: var(--nk-bg-white);
+            box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.1);
+        }
+        .hardware-table .subtotal-row td {
+            font-weight: 600;
+            background: var(--nk-bg-white);
+            border-top: 2px solid rgba(139, 115, 85, 0.22);
+            border-bottom: 2px solid rgba(139, 115, 85, 0.2);
+        }
+
+        .hardware-table tbody tr.subtotal-row:hover td {
+            background: rgba(26, 24, 20, 0.02);
+        }
+        .hardware-table .label-cell {
+            font-weight: 500;
+            color: var(--nk-text);
+        }
+
+        .hardware-stat-card {
+            background: var(--nk-bg-white);
+            border-radius: var(--radius-lg);
+            padding: 14px 16px;
+            text-align: center;
+            border: 1px solid var(--nk-border-light);
+            position: relative;
+            overflow: hidden;
+        }
+        .hardware-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--stat-color, #8B7355);
+        }
+        .hardware-stat-value {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 22px;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        .hardware-stat-label {
+            font-family: var(--font-sans);
+            font-size: 11px;
+            color: var(--nk-text-tertiary);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        /* Hardware progress bars */
+        .hardware-progress-item {
+            margin-bottom: 10px;
+        }
+        .hardware-progress-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .hardware-progress-name {
+            font-family: var(--font-sans);
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--nk-text-secondary);
+        }
+        .hardware-progress-status {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--nk-text);
+        }
+        .hardware-progress-bar-bg {
+            height: 8px;
+            background: var(--nk-bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .hardware-progress-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+            min-width: 0;
+        }
+        .hardware-progress-bar-fill.bronze { background: #8B7355; }
+        .hardware-progress-bar-fill.gold { background: #C4A35A; }
+        .hardware-progress-bar-fill.teal { background: #5A7C8A; }
+        .hardware-progress-bar-fill.achieved {
+            background: linear-gradient(90deg, var(--color-green), #6AAE6A) !important;
+        }
+
+        /* Camera remaining tip */
+        .camera-remaining-tip {
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: linear-gradient(135deg, rgba(196, 163, 90, 0.08), rgba(139, 115, 85, 0.06));
+            border: 1px solid rgba(196, 163, 90, 0.2);
+            border-radius: var(--radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .camera-remaining-icon {
+            font-size: 20px;
+            flex-shrink: 0;
+        }
+        .camera-remaining-text {
+            font-family: var(--font-sans);
+            font-size: 13px;
+            color: var(--nk-text-secondary);
+            line-height: 1.5;
+        }
+        .camera-remaining-text strong {
+            color: #8B7355;
+            font-weight: 700;
+            font-size: 16px;
         }
     </style>
 </head>
@@ -2845,6 +3127,7 @@
             <div class="view-toggle">
                 <button id="warrantyViewBtn" class="view-toggle-btn active" onclick="setView('warranty')">保証</button>
                 <button id="serviceViewBtn" class="view-toggle-btn" onclick="setView('service')">有料サービス</button>
+                <button id="hardwareViewBtn" class="view-toggle-btn" onclick="setView('hardware')">ハード</button>
             </div>
             <div class="header-actions">
                 <button id="unlockBtn" class="btn-unlock" title="項目名・目標の編集を許可">ロック中</button>
@@ -2906,7 +3189,12 @@
                                         </div>
                                     </td>
                                     <td><input type="text" value="" data-field="actualRate" readonly /></td>
-                                    <td><input type="text" value="40%" data-field="targetRate" class="locked" /></td>
+                                    <td>
+                                        <div class="cell-with-unit cell-with-percent">
+                                            <input type="number" value="40" min="0" max="100" step="0.1" data-field="targetRate" class="locked" />
+                                            <span class="percent-suffix" aria-hidden="true">%</span>
+                                        </div>
+                                    </td>
                                     <td class="achievement"><span class="achievement-icon"></span></td>
                                 </tr>
                                 <tr data-row="support" data-color="red">
@@ -2924,7 +3212,12 @@
                                         </div>
                                     </td>
                                     <td><input type="text" value="" data-field="actualRate" readonly /></td>
-                                    <td><input type="text" value="50%" data-field="targetRate" class="locked" /></td>
+                                    <td>
+                                        <div class="cell-with-unit cell-with-percent">
+                                            <input type="number" value="50" min="0" max="100" step="0.1" data-field="targetRate" class="locked" />
+                                            <span class="percent-suffix" aria-hidden="true">%</span>
+                                        </div>
+                                    </td>
                                     <td class="achievement"><span class="achievement-icon"></span></td>
                                 </tr>
                             </tbody>
@@ -3003,7 +3296,12 @@
                                         </div>
                                     </td>
                                     <td><input type="text" value="" data-field="actualRate" readonly /></td>
-                                    <td><input type="text" value="20%" data-field="targetRate" class="locked" /></td>
+                                    <td>
+                                        <div class="cell-with-unit cell-with-percent">
+                                            <input type="number" value="20" min="0" max="100" step="0.1" data-field="targetRate" class="locked" />
+                                            <span class="percent-suffix" aria-hidden="true">%</span>
+                                        </div>
+                                    </td>
                                     <td class="achievement"><span class="achievement-icon"></span></td>
                                 </tr>
                             </tbody>
@@ -3279,6 +3577,156 @@
                         </div>
                     </div>
                 </div><!-- /serviceView -->
+
+                <!-- ===== HARDWARE VIEW ===== -->
+                <div id="hardwareView" class="view-content">
+                    <!-- 予算設定セクション -->
+                    <div class="hardware-budget-section">
+                        <div class="hardware-budget-title">ハード部門 目標設定</div>
+                        <div class="hardware-budget-grid" style="grid-template-columns: repeat(2, 1fr);">
+                            <div class="hardware-budget-item">
+                                <label>カメラ予算</label>
+                                <input type="number" id="hwBudgetCamera" value="0" min="0" step="10000" oninput="calculateHardwareAll()" />
+                            </div>
+                            <div class="hardware-budget-item">
+                                <label>レンズ予算</label>
+                                <input type="number" id="hwBudgetLens" value="0" min="0" step="10000" oninput="calculateHardwareAll()" />
+                            </div>
+                        </div>
+                        <div class="hardware-budget-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 10px;">
+                            <div class="hardware-budget-item">
+                                <label>基準カメラ</label>
+                                <select id="hwBaselineCamera" onchange="calculateHardwareAll()">
+                                    <option value="155000">Canon EOS R10 18-150mm Kit (¥155,000)</option>
+                                    <option value="170000">Nikon Z50II ダブルズーム Kit (¥170,000)</option>
+                                    <option value="custom">カスタム金額</option>
+                                </select>
+                            </div>
+                            <div class="hardware-budget-item" id="hwCustomPriceWrap" style="display: none;">
+                                <label>カスタム単価</label>
+                                <input type="number" id="hwBaselineCustomPrice" value="155000" min="1000" step="1000" oninput="calculateHardwareAll()" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- カメラ売上 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-indicator" style="background: #C4A35A;"></div>
+                            <h3 class="section-title">カメラ売上</h3>
+                        </div>
+                        <div class="section-body">
+                            <table class="hardware-table" id="hwCameraTable">
+                                <thead>
+                                    <tr>
+                                        <th>項目</th>
+                                        <th style="width:140px;">売上金額</th>
+                                        <th style="width:140px;">進捗金額</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-hw="cameraNew">
+                                        <td class="label-cell">新品カメラ</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td><input type="number" data-field="progress" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                    </tr>
+                                    <tr data-hw="cameraUsed">
+                                        <td class="label-cell">中古カメラ</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td><input type="number" data-field="progress" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                    </tr>
+                                    <tr class="subtotal-row">
+                                        <td class="label-cell">カメラ合計</td>
+                                        <td id="hwCameraSalesTotal">¥0</td>
+                                        <td id="hwCameraProgressTotal">¥0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- レンズ売上 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-indicator" style="background: #5A7C8A;"></div>
+                            <h3 class="section-title">レンズ売上</h3>
+                        </div>
+                        <div class="section-body">
+                            <table class="hardware-table" id="hwLensTable">
+                                <thead>
+                                    <tr>
+                                        <th>項目</th>
+                                        <th style="width:140px;">売上金額</th>
+                                        <th style="width:140px;">進捗金額</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr data-hw="lensNew">
+                                        <td class="label-cell">新品レンズ</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td><input type="number" data-field="progress" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                    </tr>
+                                    <tr data-hw="lensUsed">
+                                        <td class="label-cell">中古レンズ</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td><input type="number" data-field="progress" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                    </tr>
+                                    <tr class="subtotal-row">
+                                        <td class="label-cell">レンズ合計</td>
+                                        <td id="hwLensSalesTotal">¥0</td>
+                                        <td id="hwLensProgressTotal">¥0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 進捗バー & 残りカメラ台数 -->
+                    <div class="section-card">
+                        <div class="section-header">
+                            <div class="section-indicator" style="background: #8B7355;"></div>
+                            <h3 class="section-title">達成状況</h3>
+                        </div>
+                        <div class="section-body">
+                            <div class="hardware-progress-item">
+                                <div class="hardware-progress-label">
+                                    <span class="hardware-progress-name">全体</span>
+                                    <span class="hardware-progress-status" id="hwProgressAll">-</span>
+                                </div>
+                                <div class="hardware-progress-bar-bg">
+                                    <div class="hardware-progress-bar-fill bronze" id="hwProgressBarAll" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="hardware-progress-item">
+                                <div class="hardware-progress-label">
+                                    <span class="hardware-progress-name">カメラ</span>
+                                    <span class="hardware-progress-status" id="hwProgressCamera">-</span>
+                                </div>
+                                <div class="hardware-progress-bar-bg">
+                                    <div class="hardware-progress-bar-fill gold" id="hwProgressBarCamera" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                            <div class="hardware-progress-item">
+                                <div class="hardware-progress-label">
+                                    <span class="hardware-progress-name">レンズ</span>
+                                    <span class="hardware-progress-status" id="hwProgressLens">-</span>
+                                </div>
+                                <div class="hardware-progress-bar-bg">
+                                    <div class="hardware-progress-bar-fill teal" id="hwProgressBarLens" style="width: 0%;"></div>
+                                </div>
+                            </div>
+
+                            <!-- 残り＝カメラN台分 -->
+                            <div class="camera-remaining-tip" id="hwCameraRemainingTip">
+                                <span class="camera-remaining-icon">📷</span>
+                                <div class="camera-remaining-text">
+                                    カメラ予算残 = あと<strong id="hwRemainingCount">0</strong>台分
+                                    <span id="hwRemainingDetail" style="font-size:11px; display:block; margin-top:2px;"></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div><!-- /hardwareView -->
             </div>
 
             <!-- Right Panel - Charts -->
@@ -3432,6 +3880,74 @@
                         </div>
                     </div>
                 </div><!-- /serviceCharts -->
+
+                <!-- ===== HARDWARE CHARTS ===== -->
+                <div id="hardwareCharts" class="view-content">
+                    <!-- Hardware Donut Chart -->
+                    <div class="donut-chart-container">
+                        <div class="donut-chart-visual">
+                            <canvas id="hardwareDonutChart"></canvas>
+                            <div class="donut-chart-center">
+                                <div class="donut-chart-value" id="hwDonutValue">0%</div>
+                                <div class="donut-chart-label">全体達成率</div>
+                            </div>
+                        </div>
+                        <div class="donut-chart-legend">
+                            <div class="donut-legend-item">
+                                <div class="donut-legend-color" style="background: #C4A35A;"></div>
+                                <span class="donut-legend-text">カメラ</span>
+                                <span class="donut-legend-status" id="hwLegendCamera">-</span>
+                            </div>
+                            <div class="donut-legend-item">
+                                <div class="donut-legend-color" style="background: #5A7C8A;"></div>
+                                <span class="donut-legend-text">レンズ</span>
+                                <span class="donut-legend-status" id="hwLegendLens">-</span>
+                            </div>
+                        </div>
+                        <div class="service-budget-meter" id="hardwareBudgetMeter">
+                            <div class="service-budget-meter-item">
+                                <div class="service-budget-meter-label">予算</div>
+                                <div class="service-budget-meter-value" id="hwBudgetTotalDisp">¥0</div>
+                            </div>
+                            <div class="service-budget-meter-divider"></div>
+                            <div class="service-budget-meter-item">
+                                <div class="service-budget-meter-label">実績</div>
+                                <div class="service-budget-meter-value" id="hwActualTotalDisp">¥0</div>
+                            </div>
+                            <div class="service-budget-meter-divider"></div>
+                            <div class="service-budget-meter-item">
+                                <div class="service-budget-meter-label">残額</div>
+                                <div class="service-budget-meter-value" id="hwRemainingTotalDisp">¥0</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Stats Grid -->
+                    <div class="stats-grid">
+                        <div class="hardware-stat-card" style="--stat-color: #8B7355;">
+                            <div class="hardware-stat-value" id="hwStatAll" style="color: #8B7355;">0%</div>
+                            <div class="hardware-stat-label">全体<br>達成率</div>
+                        </div>
+                        <div class="hardware-stat-card" style="--stat-color: #C4A35A;">
+                            <div class="hardware-stat-value" id="hwStatCamera" style="color: #C4A35A;">0%</div>
+                            <div class="hardware-stat-label">カメラ<br>達成率</div>
+                        </div>
+                        <div class="hardware-stat-card" style="--stat-color: #5A7C8A;">
+                            <div class="hardware-stat-value" id="hwStatLens" style="color: #5A7C8A;">0%</div>
+                            <div class="hardware-stat-label">レンズ<br>達成率</div>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Achievement Chart -->
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <div class="chart-title">目標達成率</div>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="hardwareAchievementChart"></canvas>
+                        </div>
+                    </div>
+                </div><!-- /hardwareCharts -->
             </div>
         </div>
 
@@ -3462,6 +3978,12 @@
         let serviceChartsInitialized = false;
         let serviceChartsInitializing = false;
 
+        // Hardware view state
+        let hardwareDonutChart = null;
+        let hardwareAchievementChart = null;
+        let hardwareChartsInitialized = false;
+        let hardwareChartsInitializing = false;
+
         // Noesis KAi Brand Colors
         const brandColors = {
             green: '#5A8A5A',
@@ -3477,35 +3999,54 @@
             textSecondary: '#5C564C',
             // Service view bright variants
             redBright: '#DA7756',
-            blueBright: '#5A9AC8'
+            blueBright: '#5A9AC8',
+            // Hardware view colors
+            bronze: '#8B7355',
+            gold: '#C4A35A',
+            teal: '#5A7C8A'
         };
+
+        /** 保存済みの目標添付率（"40%" / "40" / 40）を数値に統一 */
+        function parseTargetRateStored(val) {
+            return parseFloat(String(val == null ? '' : val).replace(/%/g, '').trim()) || 0;
+        }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             // まず localStorage からロード（即座に表示）
             loadData();
             loadServiceData();
+            loadHardwareData();
+            setupHardwareBaselineHandler();
+            setupHardwareTableListeners();
             loadViewState();
             updateDate();
             setupEventListeners();
             calculateAll();
             calculateServiceAll();
+            calculateHardwareAll();
             initCharts();
             updateServiceProgress();
+            updateHardwareProgress();
 
             // クラウドからデータをロード（非同期、最新データで上書き）
             loadFromCloud().then(function(cloud) {
                 if (cloud && applyCloudData(cloud)) {
                     calculateAll();
                     calculateServiceAll();
+                    calculateHardwareAll();
                     updateCharts();
                     updateStats();
                     if (serviceChartsInitialized) {
                         updateServiceCharts();
                         updateServiceProgress();
                     }
+                    if (hardwareChartsInitialized) {
+                        updateHardwareCharts();
+                        updateHardwareProgress();
+                    }
                     var sv = cloud.dashboardViewState;
-                    if (sv && (sv === 'warranty' || sv === 'service')) {
+                    if (sv && (sv === 'warranty' || sv === 'service' || sv === 'hardware')) {
                         setView(sv);
                     }
                     showToast('クラウドから最新データを取得しました');
@@ -3553,6 +4094,13 @@
                         chart.update('none');
                     }
                 });
+                // ハードチャートもリサイズ
+                [hardwareDonutChart, hardwareAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
             });
 
             window.addEventListener('afterprint', function() {
@@ -3593,6 +4141,12 @@
                         chart.update('none');
                     }
                 });
+                [hardwareDonutChart, hardwareAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
             });
         });
 
@@ -3615,13 +4169,6 @@
                     calculateAll();
                     updateCharts();
                     updateStats();
-                });
-            });
-
-            document.querySelectorAll('.data-table input[data-field="targetRate"]').forEach(input => {
-                input.addEventListener('input', () => {
-                    calculateAll();
-                    updateCharts();
                 });
             });
 
@@ -3711,6 +4258,9 @@
                     if (achievementChart) achievementChart.resize();
                     if (comparisonChart) comparisonChart.resize();
                     if (overallDonutChart) overallDonutChart.resize();
+                } else if (currentView === 'hardware') {
+                    if (hardwareDonutChart) hardwareDonutChart.resize();
+                    if (hardwareAchievementChart) hardwareAchievementChart.resize();
                 } else {
                     if (serviceDonutChart) serviceDonutChart.resize();
                     if (serviceBreakdownChart) serviceBreakdownChart.resize();
@@ -3719,26 +4269,30 @@
             }, 100);
         }
 
-        // Set view (warranty / service)
+        // Set view (warranty / service / hardware)
         function setView(view) {
             currentView = view;
 
             // Toggle button states
             document.getElementById('warrantyViewBtn').classList.toggle('active', view === 'warranty');
             document.getElementById('serviceViewBtn').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareViewBtn').classList.toggle('active', view === 'hardware');
 
             // Toggle left panel views
             document.getElementById('warrantyView').classList.toggle('active', view === 'warranty');
             document.getElementById('serviceView').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareView').classList.toggle('active', view === 'hardware');
 
             // Toggle right panel views
             document.getElementById('warrantyCharts').classList.toggle('active', view === 'warranty');
             document.getElementById('serviceCharts').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareCharts').classList.toggle('active', view === 'hardware');
 
             // Update title
             const title = document.querySelector('.header-title h1');
             if (title) {
-                title.textContent = view === 'warranty' ? '保証 進捗ダッシュボード' : '有料サービス 進捗ダッシュボード';
+                const titles = { warranty: '保証 進捗ダッシュボード', service: '有料サービス 進捗ダッシュボード', hardware: 'ハード 進捗ダッシュボード' };
+                title.textContent = titles[view] || titles.warranty;
             }
 
             // Lazy-initialize service charts on first switch
@@ -3759,6 +4313,23 @@
                     if (serviceBreakdownChart) serviceBreakdownChart.resize();
                     if (serviceAchievementChart) serviceAchievementChart.resize();
                     updateServiceCharts();
+                }, 50);
+            } else if (view === 'hardware' && !hardwareChartsInitialized && !hardwareChartsInitializing) {
+                hardwareChartsInitializing = true;
+                requestAnimationFrame(() => {
+                    try {
+                        initHardwareCharts();
+                        hardwareChartsInitialized = true;
+                        updateHardwareCharts();
+                    } finally {
+                        hardwareChartsInitializing = false;
+                    }
+                });
+            } else if (view === 'hardware') {
+                setTimeout(() => {
+                    if (hardwareDonutChart) hardwareDonutChart.resize();
+                    if (hardwareAchievementChart) hardwareAchievementChart.resize();
+                    updateHardwareCharts();
                 }, 50);
             } else {
                 setTimeout(() => {
@@ -3823,8 +4394,7 @@
                     actualRateInput.value = '-';
                 }
 
-                const targetRateStr = targetRateInput.value;
-                const targetRate = parseFloat(targetRateStr.replace('%', '')) || 0;
+                const targetRate = parseTargetRateStored(targetRateInput.value);
 
                 const achievedCount = actual >= target && target > 0;
                 const achievedRate = actualRate >= targetRate && targetRate > 0;
@@ -4307,7 +4877,7 @@
             }
 
             const achievedCount = item.actual >= item.target && item.target > 0;
-            const targetRate = parseFloat(item.targetRate.replace('%', '')) || 0;
+            const targetRate = parseTargetRateStored(item.targetRate);
             const actualRate = base > 0 ? (item.actual / base) * 100 : 0;
             const achievedRate = actualRate >= targetRate && targetRate > 0;
 
@@ -4454,7 +5024,15 @@
             if (nameInput) nameInput.value = data.name || '';
             if (actualInput) actualInput.value = data.actual || 0;
             if (targetInput && !targetInput.hasAttribute('readonly')) targetInput.value = data.target || 0;
-            if (targetRateInput && !targetRateInput.hasAttribute('readonly')) targetRateInput.value = data.targetRate || '';
+            if (targetRateInput && !targetRateInput.hasAttribute('readonly')) {
+                const raw = data.targetRate;
+                if (raw == null || String(raw).trim() === '') {
+                    targetRateInput.value = '';
+                } else {
+                    const n = parseTargetRateStored(raw);
+                    targetRateInput.value = Number.isFinite(n) ? String(n) : '';
+                }
+            }
         }
 
         // Reset data (ロック項目以外をクリア)
@@ -4469,6 +5047,19 @@
                     updateCharts();
                     updateStats();
                     showToast('保証データをリセットしました');
+                }
+            } else if (currentView === 'hardware') {
+                if (confirm('ハードデータをリセットしますか？\n（予算設定はそのまま保持されます）')) {
+                    document.querySelectorAll('.hardware-table input[data-field="sales"]').forEach(input => {
+                        input.value = 0;
+                    });
+                    document.querySelectorAll('.hardware-table input[data-field="progress"]').forEach(input => {
+                        input.value = 0;
+                    });
+                    calculateHardwareAll();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    updateHardwareProgress();
+                    showToast('ハードデータをリセットしました');
                 }
             } else {
                 if (confirm('有料サービスデータをリセットしますか？\n（サービス名・目標はそのまま保持されます）')) {
@@ -4491,6 +5082,31 @@
 
         function getApiBase() {
             return window.location.origin;
+        }
+
+        // API 認証ヘッダーを構築
+        // Cloudflare Access 経由の場合はブラウザが自動でクッキーを送信するため追加ヘッダー不要
+        // Access 未設定時は Bearer トークンでフォールバック
+        function getAuthHeaders() {
+            var headers = {};
+            var token = localStorage.getItem('apiSecretToken');
+            if (token) {
+                headers['Authorization'] = 'Bearer ' + token;
+            }
+            return headers;
+        }
+
+        // API トークンの設定 (Cloudflare Access 導入前の過渡的措置)
+        function promptApiToken() {
+            try {
+                var token = prompt('API アクセストークンを入力してください:');
+                if (token) {
+                    localStorage.setItem('apiSecretToken', token);
+                }
+                return token;
+            } catch (e) {
+                return null;
+            }
         }
 
         function collectAllData() {
@@ -4522,9 +5138,12 @@
                 savedAt: new Date().toISOString()
             };
 
+            var hardwareObj = getHardwareData();
+
             return {
                 warrantyDashboardData: warrantyObj,
                 serviceDashboardData: serviceObj,
+                hardwareDashboardData: hardwareObj,
                 dashboardViewState: currentView
             };
         }
@@ -4533,12 +5152,21 @@
             var allData = collectAllData();
             allData.baseVersions = cloudSyncVersions;
 
+            var headers = Object.assign({ 'Content-Type': 'application/json' }, getAuthHeaders());
+
             return fetch(getApiBase() + '/api/sync', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: headers,
+                credentials: 'same-origin',
                 body: JSON.stringify(allData)
             })
-            .then(function(res) { return res.json(); })
+            .then(function(res) {
+                if (res.status === 401) {
+                    promptApiToken();
+                    return { ok: false, error: 'UNAUTHORIZED' };
+                }
+                return res.json();
+            })
             .then(function(result) {
                 if (result.ok) {
                     if (result.meta && result.meta.versions) {
@@ -4557,10 +5185,19 @@
         }
 
         function loadFromCloud() {
-            return fetch(getApiBase() + '/api/sync')
-                .then(function(res) { return res.json(); })
+            return fetch(getApiBase() + '/api/sync', {
+                headers: getAuthHeaders(),
+                credentials: 'same-origin',
+            })
+                .then(function(res) {
+                    if (res.status === 401) {
+                        console.warn('Cloud load: authentication required');
+                        return null;
+                    }
+                    return res.json();
+                })
                 .then(function(result) {
-                    if (!result.ok) return null;
+                    if (!result || !result.ok) return null;
                     if (result.meta && result.meta.versions) {
                         cloudSyncVersions = result.meta.versions;
                     }
@@ -4617,14 +5254,45 @@
                 localStorage.setItem('serviceDashboardData', JSON.stringify(sd));
             }
 
-            if (cloud.dashboardViewState && (cloud.dashboardViewState === 'warranty' || cloud.dashboardViewState === 'service')) {
+            if (cloud.hardwareDashboardData) {
+                var hd = cloud.hardwareDashboardData;
+                if (hd.budget) {
+                    document.getElementById('hwBudgetCamera').value = hd.budget.camera ?? 0;
+                    document.getElementById('hwBudgetLens').value = hd.budget.lens ?? 0;
+                    var selBaseline = document.getElementById('hwBaselineCamera');
+                    if (hd.budget.baselineCamera) {
+                        selBaseline.value = hd.budget.baselineCamera;
+                        if (selBaseline.value !== hd.budget.baselineCamera) selBaseline.value = 'custom';
+                    }
+                    if (hd.budget.baselineCustomPrice) {
+                        document.getElementById('hwBaselineCustomPrice').value = hd.budget.baselineCustomPrice;
+                    }
+                    document.getElementById('hwCustomPriceWrap').style.display = selBaseline.value === 'custom' ? '' : 'none';
+                }
+                if (hd.items) {
+                    ['hwCameraTable', 'hwLensTable'].forEach(function(tableId) {
+                        document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(function(row) {
+                            var key = row.dataset.hw;
+                            if (!key || !hd.items[key]) return;
+                            var d = hd.items[key];
+                            var salesInput = row.querySelector('input[data-field="sales"]');
+                            var progressInput = row.querySelector('input[data-field="progress"]');
+                            if (salesInput) salesInput.value = d.sales || 0;
+                            if (progressInput) progressInput.value = d.progress || 0;
+                        });
+                    });
+                }
+                localStorage.setItem('hardwareDashboardData', JSON.stringify(hd));
+            }
+
+            if (cloud.dashboardViewState && (cloud.dashboardViewState === 'warranty' || cloud.dashboardViewState === 'service' || cloud.dashboardViewState === 'hardware')) {
                 localStorage.setItem('dashboardViewState', cloud.dashboardViewState);
             }
 
             return true;
         }
 
-        // Save data (both views)
+        // Save data (all views)
         function saveData() {
             // 保証データを保存
             const data = getTableData();
@@ -4642,6 +5310,9 @@
 
             // サービスデータも保存
             saveServiceData();
+
+            // ハードデータも保存
+            saveHardwareData();
 
             // クラウドに同期
             syncToCloud().then(function(result) {
@@ -5092,10 +5763,468 @@
             }
         }
 
+        // ========== Hardware (ハード) functions ==========
+
+        function getHardwareBaselinePrice() {
+            const sel = document.getElementById('hwBaselineCamera');
+            if (!sel) return 155000;
+            const v = sel.value;
+            if (v === 'custom') {
+                return parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0;
+            }
+            return parseInt(v) || 155000;
+        }
+
+        function getHardwareData() {
+            const budgetCamera = parseInt(document.getElementById('hwBudgetCamera')?.value) || 0;
+            const budgetLens = parseInt(document.getElementById('hwBudgetLens')?.value) || 0;
+            const baselineCamera = document.getElementById('hwBaselineCamera')?.value || '155000';
+            const baselineCustomPrice = parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0;
+
+            let cameraSales = 0, cameraProgress = 0;
+            let lensSales = 0, lensProgress = 0;
+
+            const items = {};
+
+            document.querySelectorAll('#hwCameraTable tbody tr:not(.subtotal-row)').forEach(row => {
+                const key = row.dataset.hw;
+                if (!key) return;
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                const p = parseInt(row.querySelector('input[data-field="progress"]')?.value) || 0;
+                cameraSales += s;
+                cameraProgress += p;
+                items[key] = { sales: s, progress: p };
+            });
+
+            document.querySelectorAll('#hwLensTable tbody tr:not(.subtotal-row)').forEach(row => {
+                const key = row.dataset.hw;
+                if (!key) return;
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                const p = parseInt(row.querySelector('input[data-field="progress"]')?.value) || 0;
+                lensSales += s;
+                lensProgress += p;
+                items[key] = { sales: s, progress: p };
+            });
+
+            const totalSales = cameraSales + lensSales;
+            const totalProgress = cameraProgress + lensProgress;
+            const totalBudget = budgetCamera + budgetLens;
+
+            return {
+                budget: { camera: budgetCamera, lens: budgetLens, total: totalBudget, baselineCamera, baselineCustomPrice },
+                camera: { sales: cameraSales, progress: cameraProgress, budget: budgetCamera },
+                lens: { sales: lensSales, progress: lensProgress, budget: budgetLens },
+                total: { sales: totalSales, progress: totalProgress, budget: totalBudget },
+                items: items
+            };
+        }
+
+        function calculateHardwareAll() {
+            // Camera subtotals
+            let cameraSales = 0, cameraProgress = 0;
+            document.querySelectorAll('#hwCameraTable tbody tr:not(.subtotal-row)').forEach(row => {
+                if (!row.dataset.hw) return;
+                cameraSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                cameraProgress += parseInt(row.querySelector('input[data-field="progress"]')?.value) || 0;
+            });
+            const cst = document.getElementById('hwCameraSalesTotal');
+            const cpt = document.getElementById('hwCameraProgressTotal');
+            if (cst) cst.textContent = '¥' + cameraSales.toLocaleString();
+            if (cpt) cpt.textContent = '¥' + cameraProgress.toLocaleString();
+
+            // Lens subtotals
+            let lensSales = 0, lensProgress = 0;
+            document.querySelectorAll('#hwLensTable tbody tr:not(.subtotal-row)').forEach(row => {
+                if (!row.dataset.hw) return;
+                lensSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                lensProgress += parseInt(row.querySelector('input[data-field="progress"]')?.value) || 0;
+            });
+            const lst = document.getElementById('hwLensSalesTotal');
+            const lpt = document.getElementById('hwLensProgressTotal');
+            if (lst) lst.textContent = '¥' + lensSales.toLocaleString();
+            if (lpt) lpt.textContent = '¥' + lensProgress.toLocaleString();
+        }
+
+        function updateHardwareProgress() {
+            const data = getHardwareData();
+
+            // Progress bars
+            updateHardwareProgressItem('All', data.total.progress, data.total.budget);
+            updateHardwareProgressItem('Camera', data.camera.progress, data.camera.budget);
+            updateHardwareProgressItem('Lens', data.lens.progress, data.lens.budget);
+
+            // Stat cards
+            const allRate = data.total.budget > 0 ? (data.total.progress / data.total.budget * 100).toFixed(1) : '0';
+            const cameraRate = data.camera.budget > 0 ? (data.camera.progress / data.camera.budget * 100).toFixed(1) : '0';
+            const lensRate = data.lens.budget > 0 ? (data.lens.progress / data.lens.budget * 100).toFixed(1) : '0';
+
+            const statAll = document.getElementById('hwStatAll');
+            const statCamera = document.getElementById('hwStatCamera');
+            const statLens = document.getElementById('hwStatLens');
+            if (statAll) statAll.textContent = allRate + '%';
+            if (statCamera) statCamera.textContent = cameraRate + '%';
+            if (statLens) statLens.textContent = lensRate + '%';
+
+            // Donut center
+            const donutValue = document.getElementById('hwDonutValue');
+            if (donutValue) donutValue.textContent = allRate + '%';
+
+            // Legend statuses
+            updateHardwareLegendStatus('hwLegendCamera', parseFloat(cameraRate));
+            updateHardwareLegendStatus('hwLegendLens', parseFloat(lensRate));
+
+            // Budget meter
+            const budget = data.total.budget;
+            const actual = data.total.progress;
+            const remaining = budget - actual;
+
+            const budgetEl = document.getElementById('hwBudgetTotalDisp');
+            const actualEl = document.getElementById('hwActualTotalDisp');
+            const remainingEl = document.getElementById('hwRemainingTotalDisp');
+
+            if (budgetEl) budgetEl.textContent = '¥' + budget.toLocaleString();
+            if (actualEl) actualEl.textContent = '¥' + actual.toLocaleString();
+            if (remainingEl) {
+                if (remaining < 0) {
+                    remainingEl.textContent = '+¥' + Math.abs(remaining).toLocaleString();
+                    remainingEl.classList.add('over-budget');
+                } else {
+                    remainingEl.textContent = '¥' + remaining.toLocaleString();
+                    remainingEl.classList.remove('over-budget');
+                }
+            }
+
+            // Camera remaining tip
+            updateCameraRemainingTip(data);
+        }
+
+        function updateHardwareProgressItem(name, actual, budget) {
+            const statusEl = document.getElementById('hwProgress' + name);
+            const barEl = document.getElementById('hwProgressBar' + name);
+            if (!statusEl || !barEl) return;
+
+            const remaining = Math.max(0, budget - actual);
+            const percentage = budget > 0 ? Math.min(100, (actual / budget) * 100) : 0;
+            const isAchieved = actual >= budget && budget > 0;
+
+            barEl.style.width = percentage + '%';
+            barEl.classList.toggle('achieved', isAchieved);
+
+            statusEl.classList.remove('achieved', 'close');
+            if (isAchieved) {
+                statusEl.textContent = '達成!';
+                statusEl.classList.add('achieved');
+            } else if (budget > 0 && remaining <= 50000) {
+                statusEl.textContent = 'あと ¥' + remaining.toLocaleString();
+                statusEl.classList.add('close');
+            } else if (budget > 0) {
+                statusEl.textContent = 'あと ¥' + remaining.toLocaleString();
+            } else {
+                statusEl.textContent = '-';
+            }
+        }
+
+        function updateHardwareLegendStatus(elementId, rate) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.classList.remove('achieved', 'partial', 'pending');
+            if (rate >= 100) {
+                el.textContent = '達成!';
+                el.classList.add('achieved');
+            } else if (rate >= 80) {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('partial');
+            } else {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('pending');
+            }
+        }
+
+        function updateCameraRemainingTip(data) {
+            const tipEl = document.getElementById('hwCameraRemainingTip');
+            const countEl = document.getElementById('hwRemainingCount');
+            const detailEl = document.getElementById('hwRemainingDetail');
+            if (!tipEl || !countEl || !detailEl) return;
+
+            const baselinePrice = getHardwareBaselinePrice();
+            if (baselinePrice <= 0 || data.camera.budget <= 0) {
+                tipEl.style.display = 'none';
+                return;
+            }
+
+            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.progress);
+            const remainingCount = Math.floor(cameraRemaining / baselinePrice);
+
+            tipEl.style.display = '';
+            countEl.textContent = remainingCount;
+            detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+        }
+
+        // Hardware baseline camera dropdown handler
+        function setupHardwareBaselineHandler() {
+            const sel = document.getElementById('hwBaselineCamera');
+            const customWrap = document.getElementById('hwCustomPriceWrap');
+            if (!sel || !customWrap) return;
+
+            sel.addEventListener('change', function() {
+                customWrap.style.display = this.value === 'custom' ? '' : 'none';
+                calculateHardwareAll();
+                updateHardwareProgress();
+                if (hardwareChartsInitialized) updateHardwareCharts();
+                saveHardwareData();
+            });
+
+            const customInput = document.getElementById('hwBaselineCustomPrice');
+            if (customInput) {
+                customInput.addEventListener('input', function() {
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            }
+        }
+
+        // Hardware table input event delegation
+        function setupHardwareTableListeners() {
+            ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                table.addEventListener('input', function() {
+                    calculateHardwareAll();
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            });
+
+            // Budget inputs
+            ['hwBudgetCamera', 'hwBudgetLens'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            });
+        }
+
+        // Build donut data for hardware
+        function buildHardwareDonutData(hwData) {
+            var totalProgress = hwData.camera.progress + hwData.lens.progress;
+            var totalBudget = hwData.total.budget;
+            var remaining = Math.max(0, totalBudget - totalProgress);
+
+            if (remaining > 0) {
+                return {
+                    labels: ['カメラ', 'レンズ', '未達分'],
+                    data: [hwData.camera.progress, hwData.lens.progress, remaining],
+                    colors: [brandColors.gold, brandColors.teal, 'rgba(26, 24, 20, 0.06)']
+                };
+            } else {
+                return {
+                    labels: ['カメラ', 'レンズ'],
+                    data: [hwData.camera.progress, hwData.lens.progress],
+                    colors: [brandColors.gold, brandColors.teal]
+                };
+            }
+        }
+
+        function initHardwareCharts() {
+            const hwData = getHardwareData();
+
+            // Donut chart
+            const donutCtx = document.getElementById('hardwareDonutChart').getContext('2d');
+            var donutInitData = buildHardwareDonutData(hwData);
+            hardwareDonutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: donutInitData.labels,
+                    datasets: [{
+                        data: donutInitData.data,
+                        backgroundColor: donutInitData.colors,
+                        borderWidth: 0,
+                        cutout: '82%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: { duration: 600, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: function(tooltipItem) {
+                                return tooltipItem.label !== '未達分';
+                            },
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.label + ': ¥' + ctx.raw.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Achievement bar chart
+            const achieveCtx = document.getElementById('hardwareAchievementChart').getContext('2d');
+            hardwareAchievementChart = new Chart(achieveCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['全体', 'カメラ', 'レンズ'],
+                    datasets: [{
+                        label: '達成率',
+                        data: [0, 0, 0],
+                        backgroundColor: [brandColors.bronze, brandColors.gold, brandColors.teal],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { left: 5, right: 15 } },
+                    animation: { duration: 500, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            clip: true,
+                            annotations: {
+                                line100: {
+                                    type: 'line',
+                                    yMin: 100, yMax: 100,
+                                    borderColor: '#C15F3C',
+                                    borderWidth: 2,
+                                    borderDash: [4, 3],
+                                    drawTime: 'beforeDatasetsDraw',
+                                    label: { display: false }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                stepSize: 25,
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHardwareCharts() {
+            const data = getHardwareData();
+
+            if (hardwareDonutChart) {
+                var donutData = buildHardwareDonutData(data);
+                hardwareDonutChart.data.labels = donutData.labels;
+                hardwareDonutChart.data.datasets[0].data = donutData.data;
+                hardwareDonutChart.data.datasets[0].backgroundColor = donutData.colors;
+                hardwareDonutChart.update();
+            }
+
+            if (hardwareAchievementChart) {
+                const rates = [
+                    data.total.budget > 0 ? (data.total.progress / data.total.budget * 100) : 0,
+                    data.camera.budget > 0 ? (data.camera.progress / data.camera.budget * 100) : 0,
+                    data.lens.budget > 0 ? (data.lens.progress / data.lens.budget * 100) : 0
+                ];
+                const chartMax = calculateAchievementChartMax(rates);
+                hardwareAchievementChart.options.scales.y.max = chartMax;
+                hardwareAchievementChart.options.scales.y.ticks.stepSize = chartMax <= 100 ? 25 : 50;
+                hardwareAchievementChart.data.datasets[0].data = rates.map(r => Math.round(r * 10) / 10);
+                hardwareAchievementChart.update();
+            }
+
+            updateHardwareProgress();
+        }
+
+        function saveHardwareData() {
+            const items = {};
+            ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
+                document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(row => {
+                    const key = row.dataset.hw;
+                    if (!key) return;
+                    items[key] = {
+                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0,
+                        progress: parseInt(row.querySelector('input[data-field="progress"]')?.value) || 0
+                    };
+                });
+            });
+
+            const saveObject = {
+                items: items,
+                budget: {
+                    camera: parseInt(document.getElementById('hwBudgetCamera')?.value) || 0,
+                    lens: parseInt(document.getElementById('hwBudgetLens')?.value) || 0,
+                    baselineCamera: document.getElementById('hwBaselineCamera')?.value || '155000',
+                    baselineCustomPrice: parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0
+                },
+                savedAt: new Date().toISOString()
+            };
+
+            localStorage.setItem('hardwareDashboardData', JSON.stringify(saveObject));
+        }
+
+        function loadHardwareData() {
+            const saved = localStorage.getItem('hardwareDashboardData');
+            if (!saved) return;
+
+            try {
+                const parsed = JSON.parse(saved);
+
+                // Restore budget settings
+                if (parsed.budget) {
+                    const bc = document.getElementById('hwBudgetCamera');
+                    const bl = document.getElementById('hwBudgetLens');
+                    const sel = document.getElementById('hwBaselineCamera');
+                    const customInput = document.getElementById('hwBaselineCustomPrice');
+                    const customWrap = document.getElementById('hwCustomPriceWrap');
+
+                    if (bc) bc.value = parsed.budget.camera ?? 0;
+                    if (bl) bl.value = parsed.budget.lens ?? 0;
+                    if (sel) sel.value = parsed.budget.baselineCamera ?? '155000';
+                    if (customInput) customInput.value = parsed.budget.baselineCustomPrice ?? 0;
+                    if (customWrap) customWrap.style.display = (parsed.budget.baselineCamera === 'custom') ? '' : 'none';
+                }
+
+                // Restore table data
+                if (parsed.items) {
+                    ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
+                        document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(row => {
+                            const key = row.dataset.hw;
+                            if (!key || !parsed.items[key]) return;
+
+                            const d = parsed.items[key];
+                            const salesInput = row.querySelector('input[data-field="sales"]');
+                            const progressInput = row.querySelector('input[data-field="progress"]');
+
+                            if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
+                            if (progressInput && progressInput.type === 'number') progressInput.value = d.progress || 0;
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load hardware data:', e);
+            }
+        }
+
         // Load/restore view state
         function loadViewState() {
             const savedView = localStorage.getItem('dashboardViewState');
-            if (savedView && (savedView === 'warranty' || savedView === 'service')) {
+            if (savedView && (savedView === 'warranty' || savedView === 'service' || savedView === 'hardware')) {
                 setView(savedView);
             }
         }
