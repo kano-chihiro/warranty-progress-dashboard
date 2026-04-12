@@ -31,18 +31,20 @@ function getCorsHeaders(request) {
 }
 
 function isAuthenticated(request, env) {
-  // Cloudflare Access JWT (Phase 2) — Access を通過したリクエストに自動付与
+  // Cloudflare Access JWT — Access を通過したリクエストに自動付与
   if (request.headers.get("Cf-Access-Jwt-Assertion")) {
     return true;
   }
-  // Bearer トークン (Phase 1 過渡的措置 — Access 導入後に撤去可能)
+  // Bearer トークン（設定されている場合のみ検証）
   if (env.API_SECRET_TOKEN) {
     const auth = request.headers.get("Authorization");
     if (auth && auth.startsWith("Bearer ")) {
       return auth.slice(7) === env.API_SECRET_TOKEN;
     }
+    return false;
   }
-  return false;
+  // 認証メカニズム未設定 — Cloudflare Access 導入までは許可
+  return true;
 }
 
 function jsonResponse(data, status = 200, request) {

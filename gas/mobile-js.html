@@ -1,0 +1,892 @@
+<script>
+// ============================================
+// Mobile JS — Sync Bridge + Mobile UI Control
+// ============================================
+
+(function() {
+    'use strict';
+
+    // Skip entirely on desktop
+    if (!document.documentElement.classList.contains('is-mobile')) return;
+
+    // --- State ---
+    var mCurrentView = 'warranty';
+    var mIsEditMode = true;
+
+    // ===================================================
+    // 1. INPUT SYNC MAP  (mobile ID → desktop selector)
+    // ===================================================
+    var inputSyncMap = {
+        // Warranty — Table 1
+        'm-hard-actual':       '#table1 tr[data-row="hard"] input[data-field="actual"]',
+        'm-warranty-actual':   '#table1 tr[data-row="warranty"] input[data-field="actual"]',
+        'm-warranty-target':   '#table1 tr[data-row="warranty"] input[data-field="target"]',
+        'm-support-actual':    '#table1 tr[data-row="support"] input[data-field="actual"]',
+        'm-support-target':    '#table1 tr[data-row="support"] input[data-field="target"]',
+        // Warranty — Budget
+        'm-warrantyBudget':       '#warrantyBudget',
+        'm-warrantyActualAmount': '#warrantyActualAmount',
+        // Warranty — Table 2
+        'm-used-actual':          '#table2 tr[data-row="used"] input[data-field="actual"]',
+        'm-usedSupport-actual':   '#table2 tr[data-row="usedSupport"] input[data-field="actual"]',
+        'm-usedSupport-target':   '#table2 tr[data-row="usedSupport"] input[data-field="target"]',
+        // Warranty — Target Rates
+        'm-warranty-targetRate':   '#table1 tr[data-row="warranty"] input[data-field="targetRate"]',
+        'm-support-targetRate':    '#table1 tr[data-row="support"] input[data-field="targetRate"]',
+        'm-usedSupport-targetRate':'#table2 tr[data-row="usedSupport"] input[data-field="targetRate"]',
+        // Service — Budget
+        'm-svcBudgetBase':   '#svcBudgetBase',
+        'm-svcTargetMaint':  '#svcTargetMaint',
+        'm-svcTargetSetup':  '#svcTargetSetup',
+        // Hardware — Budget
+        'm-hwBudgetCamera':        '#hwBudgetCamera',
+        'm-hwBudgetLens':          '#hwBudgetLens',
+        'm-hwBaselineCamera':      '#hwBaselineCamera',
+        'm-hwBaselineCustomPrice': '#hwBaselineCustomPrice'
+    };
+
+    // Service table rows (generated)
+    var svcTable1Services = ['cameraGlass','smartGlass','quickMaint','quickMaint_contact','quickMaint_other','cameraNano','sensorClean','smartClean','bulkFilm'];
+    var svcTable2Services = ['cameraSetup','smartSupport','smartSetupA'];
+    svcTable1Services.forEach(function(svc) {
+        inputSyncMap['m-' + svc + '-customers'] = '#serviceTable1 tr[data-service="' + svc + '"] input[data-field="customers"]';
+        inputSyncMap['m-' + svc + '-sales']     = '#serviceTable1 tr[data-service="' + svc + '"] input[data-field="sales"]';
+    });
+    svcTable2Services.forEach(function(svc) {
+        inputSyncMap['m-' + svc + '-customers'] = '#serviceTable2 tr[data-service="' + svc + '"] input[data-field="customers"]';
+        inputSyncMap['m-' + svc + '-sales']     = '#serviceTable2 tr[data-service="' + svc + '"] input[data-field="sales"]';
+    });
+
+    // Hardware table rows
+    ['cameraNew','cameraUsed'].forEach(function(hw) {
+        inputSyncMap['m-' + hw + '-sales']    = '#hwCameraTable tr[data-hw="' + hw + '"] input[data-field="sales"]';
+        inputSyncMap['m-' + hw + '-progress'] = '#hwCameraTable tr[data-hw="' + hw + '"] input[data-field="progress"]';
+    });
+    ['lensNew','lensUsed'].forEach(function(hw) {
+        inputSyncMap['m-' + hw + '-sales']    = '#hwLensTable tr[data-hw="' + hw + '"] input[data-field="sales"]';
+        inputSyncMap['m-' + hw + '-progress'] = '#hwLensTable tr[data-hw="' + hw + '"] input[data-field="progress"]';
+    });
+
+    // ===================================================
+    // 2. SYNC BRIDGE — mobile input → desktop element
+    // ===================================================
+    function syncToDesktop(mobileId) {
+        var sel = inputSyncMap[mobileId];
+        if (!sel) return;
+        var mEl = document.getElementById(mobileId);
+        var dEl = document.querySelector(sel);
+        if (!mEl || !dEl) return;
+        dEl.value = mEl.value;
+        // Trigger desktop event handlers
+        dEl.dispatchEvent(new Event('input', { bubbles: true }));
+        dEl.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // ===================================================
+    // 3. DISPLAY SYNC — desktop computed → mobile display
+    // ===================================================
+    function mSyncFromDesktop() {
+        mSyncWarrantyDisplay();
+        mSyncServiceDisplay();
+        mSyncHardwareDisplay();
+        mUpdateAllCharts();
+    }
+
+    function mSyncWarrantyDisplay() {
+        // Copy input values desktop → mobile
+        copyVal('#table1 tr[data-row="hard"] input[data-field="actual"]', 'm-hard-actual');
+        copyVal('#table1 tr[data-row="warranty"] input[data-field="actual"]', 'm-warranty-actual');
+        copyVal('#table1 tr[data-row="warranty"] input[data-field="target"]', 'm-warranty-target');
+        copyVal('#table1 tr[data-row="support"] input[data-field="actual"]', 'm-support-actual');
+        copyVal('#table1 tr[data-row="support"] input[data-field="target"]', 'm-support-target');
+        copyVal('#warrantyBudget', 'm-warrantyBudget');
+        copyVal('#warrantyActualAmount', 'm-warrantyActualAmount');
+        copyVal('#table2 tr[data-row="used"] input[data-field="actual"]', 'm-used-actual');
+        copyVal('#table2 tr[data-row="usedSupport"] input[data-field="actual"]', 'm-usedSupport-actual');
+        copyVal('#table2 tr[data-row="usedSupport"] input[data-field="target"]', 'm-usedSupport-target');
+
+        // Computed rates (actualRate = display only, targetRate = editable input)
+        setText('#table1 tr[data-row="warranty"] input[data-field="actualRate"]', 'm-warranty-actualRate');
+        copyVal('#table1 tr[data-row="warranty"] input[data-field="targetRate"]', 'm-warranty-targetRate');
+        setText('#table1 tr[data-row="support"] input[data-field="actualRate"]', 'm-support-actualRate');
+        copyVal('#table1 tr[data-row="support"] input[data-field="targetRate"]', 'm-support-targetRate');
+        setText('#table2 tr[data-row="usedSupport"] input[data-field="actualRate"]', 'm-usedSupport-actualRate');
+        copyVal('#table2 tr[data-row="usedSupport"] input[data-field="targetRate"]', 'm-usedSupport-targetRate');
+
+        // Achievement badges
+        syncBadge('warranty', '#table1 tr[data-row="warranty"]');
+        syncBadge('support', '#table1 tr[data-row="support"]');
+        syncBadge('usedSupport', '#table2 tr[data-row="usedSupport"]');
+
+        // Progress bars
+        syncProgress('progressWarranty', 'm-progressWarranty', 'progressBarWarranty', 'm-progressBarWarranty');
+        syncProgress('progressSupport', 'm-progressSupport', 'progressBarSupport', 'm-progressBarSupport');
+        syncProgress('progressUsed', 'm-progressUsed', 'progressBarUsed', 'm-progressBarUsed');
+
+        // Budget amounts
+        var budgetCur = getElText('budgetCurrentDisplay');
+        var budgetTot = getElText('budgetTotalDisplay');
+        setElText('m-budgetAmounts', budgetCur + ' / ' + budgetTot);
+        var budgetBar = document.getElementById('budgetBar');
+        if (budgetBar) {
+            var mBudgetBar = document.getElementById('m-budgetBar');
+            if (mBudgetBar) mBudgetBar.style.width = budgetBar.style.width;
+        }
+
+        // Stats
+        copyText('statWarrantyRate', 'm-statWarrantyRate');
+        copyText('statSupportRate', 'm-statSupportRate');
+        copyText('statUsedRate', 'm-statUsedRate');
+
+        // Preview mirrors
+        copyText('statWarrantyRate', 'm-pvWarrantyRate');
+        copyText('statSupportRate', 'm-pvSupportRate');
+        copyText('statUsedRate', 'm-pvUsedRate');
+        syncProgress('progressWarranty', 'm-pvProgressWarranty', 'progressBarWarranty', 'm-pvProgressBarWarranty');
+        syncProgress('progressSupport', 'm-pvProgressSupport', 'progressBarSupport', 'm-pvProgressBarSupport');
+        syncProgress('progressUsed', 'm-pvProgressUsed', 'progressBarUsed', 'm-pvProgressBarUsed');
+    }
+
+    function mSyncServiceDisplay() {
+        // Copy input values
+        copyVal('#svcBudgetBase', 'm-svcBudgetBase');
+        copyVal('#svcTargetMaint', 'm-svcTargetMaint');
+        copyVal('#svcTargetSetup', 'm-svcTargetSetup');
+
+        svcTable1Services.forEach(function(svc) {
+            copyVal('#serviceTable1 tr[data-service="' + svc + '"] input[data-field="customers"]', 'm-' + svc + '-customers');
+            copyVal('#serviceTable1 tr[data-service="' + svc + '"] input[data-field="sales"]', 'm-' + svc + '-sales');
+        });
+        svcTable2Services.forEach(function(svc) {
+            copyVal('#serviceTable2 tr[data-service="' + svc + '"] input[data-field="customers"]', 'm-' + svc + '-customers');
+            copyVal('#serviceTable2 tr[data-service="' + svc + '"] input[data-field="sales"]', 'm-' + svc + '-sales');
+        });
+
+        // Direct calculation from mobile inputs
+        mCalcServiceDirect();
+    }
+
+    // ========= DIRECT SERVICE CALCULATION from mobile inputs =========
+    function mCalcServiceDirect() {
+        var targetMaint = mInt('m-svcTargetMaint');
+        var targetSetup = mInt('m-svcTargetSetup');
+        var budgetBase = mInt('m-svcBudgetBase');
+        var totalTarget = targetMaint + targetSetup;
+
+        // Maint subtotals (skip child rows for totals)
+        var maintCustomers = 0, maintSales = 0;
+        var maintParentServices = ['cameraGlass','smartGlass','quickMaint','cameraNano','sensorClean','smartClean','bulkFilm'];
+        maintParentServices.forEach(function(svc) {
+            maintCustomers += mInt('m-' + svc + '-customers');
+            maintSales += mInt('m-' + svc + '-sales');
+        });
+
+        // Setup subtotals
+        var setupCustomers = 0, setupSales = 0;
+        svcTable2Services.forEach(function(svc) {
+            setupCustomers += mInt('m-' + svc + '-customers');
+            setupSales += mInt('m-' + svc + '-sales');
+        });
+
+        var totalSales = maintSales + setupSales;
+        var totalCustomers = maintCustomers + setupCustomers;
+
+        // Subtotals display
+        setElText('m-maintSubtotalCustomers', String(maintCustomers));
+        setElText('m-maintSubtotalSales', '\u00A5' + maintSales.toLocaleString());
+        setElText('m-setupSubtotalCustomers', String(setupCustomers));
+        setElText('m-setupSubtotalSales', '\u00A5' + setupSales.toLocaleString());
+
+        // Progress
+        mSetProgress('m-svcProgressAll', 'm-svcProgressBarAll', totalSales, totalTarget);
+        mSetProgress('m-svcProgressMaint', 'm-svcProgressBarMaint', maintSales, targetMaint);
+        mSetProgress('m-svcProgressSetup', 'm-svcProgressBarSetup', setupSales, targetSetup);
+
+        // Stats
+        var allRate = totalTarget > 0 ? (totalSales / totalTarget * 100).toFixed(1) : '0';
+        var maintRate = targetMaint > 0 ? (maintSales / targetMaint * 100).toFixed(1) : '0';
+        var setupRate = targetSetup > 0 ? (setupSales / targetSetup * 100).toFixed(1) : '0';
+
+        setElText('m-pvSvcStatAll', allRate + '%');
+        setElText('m-pvSvcStatMaint', maintRate + '%');
+        setElText('m-pvSvcStatSetup', setupRate + '%');
+        setElText('m-svcDonutValue', allRate + '%');
+
+        // Budget meter
+        var remaining = budgetBase - totalSales;
+        setElText('m-svcBudgetTotal', '\u00A5' + budgetBase.toLocaleString());
+        setElText('m-svcActualTotal', '\u00A5' + totalSales.toLocaleString());
+        setElText('m-svcRemainingTotal', (remaining < 0 ? '+' : '') + '\u00A5' + Math.abs(remaining).toLocaleString());
+
+        // Preview mirrors
+        setElText('m-pvSvcBudget', '\u00A5' + budgetBase.toLocaleString());
+        setElText('m-pvSvcActual', '\u00A5' + totalSales.toLocaleString());
+        setElText('m-pvSvcRemaining', (remaining < 0 ? '+' : '') + '\u00A5' + Math.abs(remaining).toLocaleString());
+        setElText('m-svcDonutValuePreview', allRate + '%');
+        mSetProgress('m-pvSvcProgressAll', 'm-pvSvcBarAll', totalSales, totalTarget);
+        mSetProgress('m-pvSvcProgressMaint', 'm-pvSvcBarMaint', maintSales, targetMaint);
+        mSetProgress('m-pvSvcProgressSetup', 'm-pvSvcBarSetup', setupSales, targetSetup);
+    }
+
+    function mSyncHardwareDisplay() {
+        // Copy input values from desktop → mobile (initial load)
+        copyVal('#hwBudgetCamera', 'm-hwBudgetCamera');
+        copyVal('#hwBudgetLens', 'm-hwBudgetLens');
+        copyVal('#hwBaselineCamera', 'm-hwBaselineCamera');
+        copyVal('#hwBaselineCustomPrice', 'm-hwBaselineCustomPrice');
+
+        ['cameraNew','cameraUsed'].forEach(function(hw) {
+            copyVal('#hwCameraTable tr[data-hw="' + hw + '"] input[data-field="sales"]', 'm-' + hw + '-sales');
+            copyVal('#hwCameraTable tr[data-hw="' + hw + '"] input[data-field="progress"]', 'm-' + hw + '-progress');
+        });
+        ['lensNew','lensUsed'].forEach(function(hw) {
+            copyVal('#hwLensTable tr[data-hw="' + hw + '"] input[data-field="sales"]', 'm-' + hw + '-sales');
+            copyVal('#hwLensTable tr[data-hw="' + hw + '"] input[data-field="progress"]', 'm-' + hw + '-progress');
+        });
+
+        // Custom price wrap
+        var mSel = document.getElementById('m-hwBaselineCamera');
+        var wrap = document.getElementById('m-hwCustomPriceWrap');
+        if (mSel && wrap) wrap.style.display = mSel.value === 'custom' ? '' : 'none';
+
+        // Direct calculation from mobile inputs (no sync bridge dependency)
+        mCalcHardwareDirect();
+    }
+
+    // ========= DIRECT HARDWARE CALCULATION from mobile inputs =========
+    function mCalcHardwareDirect() {
+        var budgetCamera = mInt('m-hwBudgetCamera');
+        var budgetLens = mInt('m-hwBudgetLens');
+        var totalBudget = budgetCamera + budgetLens;
+
+        // Camera subtotals
+        var cameraSales = mInt('m-cameraNew-sales') + mInt('m-cameraUsed-sales');
+        var cameraProgress = mInt('m-cameraNew-progress') + mInt('m-cameraUsed-progress');
+
+        // Lens subtotals
+        var lensSales = mInt('m-lensNew-sales') + mInt('m-lensUsed-sales');
+        var lensProgress = mInt('m-lensNew-progress') + mInt('m-lensUsed-progress');
+
+        var totalSales = cameraSales + lensSales;
+        var totalProgress = cameraProgress + lensProgress;
+
+        // Subtotal display
+        setElText('m-hwCameraSalesTotal', '\u00A5' + cameraSales.toLocaleString());
+        setElText('m-hwCameraProgressTotal', '\u00A5' + cameraProgress.toLocaleString());
+        setElText('m-hwLensSalesTotal', '\u00A5' + lensSales.toLocaleString());
+        setElText('m-hwLensProgressTotal', '\u00A5' + lensProgress.toLocaleString());
+
+        // Progress bars
+        mSetProgress('m-hwProgressAll', 'm-hwProgressBarAll', totalProgress, totalBudget);
+        mSetProgress('m-hwProgressCamera', 'm-hwProgressBarCamera', cameraProgress, budgetCamera);
+        mSetProgress('m-hwProgressLens', 'm-hwProgressBarLens', lensProgress, budgetLens);
+
+        // Stats
+        var allRate = totalBudget > 0 ? (totalProgress / totalBudget * 100).toFixed(1) : '0';
+        var cameraRate = budgetCamera > 0 ? (cameraProgress / budgetCamera * 100).toFixed(1) : '0';
+        var lensRate = budgetLens > 0 ? (lensProgress / budgetLens * 100).toFixed(1) : '0';
+
+        setElText('m-hwStatAll', allRate + '%');
+        setElText('m-hwStatCamera', cameraRate + '%');
+        setElText('m-hwStatLens', lensRate + '%');
+        setElText('m-hwDonutValue', allRate + '%');
+
+        // Budget meter
+        setElText('m-hwBudgetTotalDisp', '\u00A5' + totalBudget.toLocaleString());
+        setElText('m-hwActualTotalDisp', '\u00A5' + totalProgress.toLocaleString());
+        var remaining = totalBudget - totalProgress;
+        setElText('m-hwRemainingTotalDisp2', (remaining < 0 ? '+' : '') + '\u00A5' + Math.abs(remaining).toLocaleString());
+
+        // Camera remaining tip
+        var mSel = document.getElementById('m-hwBaselineCamera');
+        var baselinePrice = 155000;
+        if (mSel) {
+            if (mSel.value === 'custom') {
+                baselinePrice = mInt('m-hwBaselineCustomPrice') || 155000;
+            } else {
+                baselinePrice = parseInt(mSel.value) || 155000;
+            }
+        }
+        var cameraRemaining = Math.max(0, budgetCamera - cameraProgress);
+        var remainingCount = baselinePrice > 0 ? Math.floor(cameraRemaining / baselinePrice) : 0;
+        setElText('m-hwRemainingCount', String(remainingCount));
+
+        // Preview mirrors
+        setElText('m-pvHwBudget', '\u00A5' + totalBudget.toLocaleString());
+        setElText('m-pvHwActual', '\u00A5' + totalProgress.toLocaleString());
+        setElText('m-pvHwRemaining', (remaining < 0 ? '+' : '') + '\u00A5' + Math.abs(remaining).toLocaleString());
+        setElText('m-pvHwStatAll', allRate + '%');
+        setElText('m-pvHwStatCamera', cameraRate + '%');
+        setElText('m-pvHwStatLens', lensRate + '%');
+        setElText('m-hwDonutValuePreview', allRate + '%');
+        mSetProgress('m-pvHwProgressAll', 'm-pvHwBarAll', totalProgress, totalBudget);
+        mSetProgress('m-pvHwProgressCamera', 'm-pvHwBarCamera', cameraProgress, budgetCamera);
+        mSetProgress('m-pvHwProgressLens', 'm-pvHwBarLens', lensProgress, budgetLens);
+        setElText('m-pvHwRemainingCount', String(remainingCount));
+    }
+
+    // Read int from mobile input
+    function mInt(id) {
+        var el = document.getElementById(id);
+        return el ? (parseInt(el.value) || 0) : 0;
+    }
+
+    // Set progress bar and text directly
+    function mSetProgress(textId, barId, actual, budget) {
+        var textEl = document.getElementById(textId);
+        var barEl = document.getElementById(barId);
+        var pct = budget > 0 ? Math.min(100, actual / budget * 100) : 0;
+        var rem = Math.max(0, budget - actual);
+        var isAchieved = actual >= budget && budget > 0;
+
+        if (barEl) barEl.style.width = pct + '%';
+        if (textEl) {
+            if (isAchieved) {
+                textEl.textContent = '\u9054\u6210!';
+            } else if (budget > 0) {
+                textEl.textContent = '\u3042\u3068 \u00A5' + rem.toLocaleString();
+            } else {
+                textEl.textContent = '-';
+            }
+        }
+    }
+
+    // ===================================================
+    // 4. HELPER FUNCTIONS
+    // ===================================================
+    function copyVal(desktopSel, mobileId) {
+        var d = document.querySelector(desktopSel);
+        var m = document.getElementById(mobileId);
+        if (d && m) m.value = d.value;
+    }
+
+    function getVal(sel) {
+        var el = document.querySelector(sel);
+        return el ? el.value : '';
+    }
+
+    function setText(desktopSel, mobileId) {
+        var d = document.querySelector(desktopSel);
+        var m = document.getElementById(mobileId);
+        if (d && m) m.textContent = d.value || '-';
+    }
+
+    function copyText(desktopId, mobileId) {
+        var d = document.getElementById(desktopId);
+        var m = document.getElementById(mobileId);
+        if (d && m) m.textContent = d.textContent || '-';
+    }
+
+    function getElText(id) {
+        var el = document.getElementById(id);
+        return el ? el.textContent : '';
+    }
+
+    function setElText(id, text) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = text;
+    }
+
+    function getSubtotalVal(rowSel, field) {
+        var row = document.querySelector(rowSel);
+        if (!row) return '0';
+        var input = row.querySelector('input[data-field="' + field + '"]');
+        return input ? input.value : '0';
+    }
+
+    function syncBadge(name, desktopRowSel) {
+        var badge = document.getElementById('m-' + name + '-badge');
+        var row = document.querySelector(desktopRowSel);
+        if (!badge || !row) return;
+        var cls = row.className;
+        if (cls.indexOf('achieved-') !== -1) {
+            badge.textContent = '達成';
+            badge.className = 'm-item-badge achieved';
+        } else if (cls.indexOf('partial-') !== -1) {
+            badge.textContent = '件数達成';
+            badge.className = 'm-item-badge partial';
+        } else {
+            badge.textContent = '未達成';
+            badge.className = 'm-item-badge';
+        }
+    }
+
+    function syncProgress(desktopTextId, mobileTextId, desktopBarId, mobileBarId) {
+        copyText(desktopTextId, mobileTextId);
+        var dBar = document.getElementById(desktopBarId);
+        var mBar = document.getElementById(mobileBarId);
+        if (dBar && mBar) mBar.style.width = dBar.style.width;
+    }
+
+    // ===================================================
+    // 5. MOBILE CHART.JS — Init + Update
+    // ===================================================
+    var mCharts = {};  // { canvasId: Chart instance }
+    var mChartsInitialized = { warranty: false, service: false, hardware: false };
+    var mPreviewChartsInitialized = { warranty: false, service: false, hardware: false };
+
+    // --- Shared chart options ---
+    var mBarOptions = function(yCallback) {
+        return {
+            responsive: true,
+            maintainAspectRatio: false,
+            animation: { duration: 400 },
+            layout: { padding: { left: 2, right: 8 } },
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true, max: 100,
+                    ticks: { callback: yCallback || function(v) { return v + '%'; }, stepSize: 25, font: { size: 9, family: "'IBM Plex Mono', monospace" } },
+                    grid: { color: 'rgba(26,24,20,0.06)', drawBorder: false }
+                },
+                x: { grid: { display: false }, ticks: { font: { size: 9, weight: 500 } } }
+            }
+        };
+    };
+
+    var mDonutOptions = {
+        responsive: true,
+        maintainAspectRatio: true,
+        animation: { duration: 500 },
+        plugins: { legend: { display: false }, tooltip: { enabled: false } }
+    };
+
+    // --- Create a chart safely ---
+    function mCreateChart(canvasId, config) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return null;
+        if (mCharts[canvasId]) { mCharts[canvasId].destroy(); }
+        var ctx = canvas.getContext('2d');
+        var chart = new Chart(ctx, config);
+        mCharts[canvasId] = chart;
+        // Force resize after creation to ensure correct dimensions
+        requestAnimationFrame(function() { chart.resize(); });
+        return chart;
+    }
+
+    // --- WARRANTY CHARTS ---
+    function mInitWarrantyCharts() {
+        if (mChartsInitialized.warranty) return;
+        mChartsInitialized.warranty = true;
+
+        // Donut
+        mCreateChart('m-warrantyDonut', {
+            type: 'doughnut',
+            data: { labels: ['達成','件数達成','未達成'], datasets: [{ data: [0,0,3], backgroundColor: [brandColors.green, 'rgba(90,138,90,0.35)', 'rgba(26,24,20,0.08)'], borderWidth: 0, cutout: '80%' }] },
+            options: mDonutOptions
+        });
+
+        // Achievement bar
+        mCreateChart('m-achievementChart', {
+            type: 'bar',
+            data: { labels: ['5年間保証','安心サポ','中古サポ'], datasets: [{ data: [0,0,0], backgroundColor: [brandColors.green, brandColors.red, brandColors.blue], borderRadius: 4, borderSkipped: false, barThickness: 28 }] },
+            options: mBarOptions()
+        });
+
+        // Comparison bar
+        var compOpts = mBarOptions();
+        compOpts.plugins = { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 9 } } } };
+        mCreateChart('m-comparisonChart', {
+            type: 'bar',
+            data: { labels: ['5年間保証','安心サポ','中古サポ'], datasets: [
+                { label: '実績率', data: [0,0,0], backgroundColor: [brandColors.green, brandColors.red, brandColors.blue], borderRadius: 4, borderSkipped: false, barThickness: 20 },
+                { label: '目標率', data: [0,0,0], backgroundColor: 'rgba(138,131,120,0.2)', borderColor: brandColors.gray, borderWidth: 1, borderRadius: 4, borderSkipped: false, barThickness: 20 }
+            ] },
+            options: compOpts
+        });
+
+        mUpdateWarrantyCharts();
+    }
+
+    function mInitWarrantyPreviewCharts() {
+        if (mPreviewChartsInitialized.warranty) return;
+        mPreviewChartsInitialized.warranty = true;
+
+        mCreateChart('m-warrantyDonutPreview', {
+            type: 'doughnut',
+            data: { labels: ['達成','件数達成','未達成'], datasets: [{ data: [0,0,3], backgroundColor: [brandColors.green, 'rgba(90,138,90,0.35)', 'rgba(26,24,20,0.08)'], borderWidth: 0, cutout: '80%' }] },
+            options: mDonutOptions
+        });
+
+        mCreateChart('m-achievementChartPreview', {
+            type: 'bar',
+            data: { labels: ['5年間保証','安心サポ','中古サポ'], datasets: [{ data: [0,0,0], backgroundColor: [brandColors.green, brandColors.red, brandColors.blue], borderRadius: 4, borderSkipped: false, barThickness: 28 }] },
+            options: mBarOptions()
+        });
+
+        mUpdateWarrantyCharts();
+    }
+
+    function mUpdateWarrantyCharts() {
+        if (typeof getTableData !== 'function' || typeof getItemAchievementStatus !== 'function') return;
+        var data = getTableData();
+        // data = { table1: { hard, warranty, support }, table2: { used, usedSupport } }
+        var statuses = [
+            getItemAchievementStatus('warranty', data),
+            getItemAchievementStatus('support', data),
+            getItemAchievementStatus('usedSupport', data)
+        ];
+        var achieved = statuses.filter(function(s){ return s==='achieved'; }).length;
+        var partial = statuses.filter(function(s){ return s==='partial'; }).length;
+        var pending = statuses.filter(function(s){ return s==='pending'; }).length;
+
+        // Donut data
+        var donutData = [achieved, partial, pending];
+        ['m-warrantyDonut','m-warrantyDonutPreview'].forEach(function(id) {
+            var c = mCharts[id];
+            if (c) { c.data.datasets[0].data = donutData; c.update(); }
+        });
+        setElText('m-donutValue', achieved + '/3');
+        setElText('m-donutValuePreview', achieved + '/3');
+
+        // Achievement rates (actual / target count)
+        var items = [data.table1.warranty, data.table1.support, data.table2.usedSupport];
+        var rates = items.map(function(item) {
+            return item.target > 0 ? Math.round(item.actual / item.target * 1000) / 10 : 0;
+        });
+        var chartMax = (typeof calculateAchievementChartMax === 'function') ? calculateAchievementChartMax(rates) : 100;
+        ['m-achievementChart','m-achievementChartPreview'].forEach(function(id) {
+            var c = mCharts[id];
+            if (c) {
+                c.data.datasets[0].data = rates;
+                c.options.scales.y.max = chartMax;
+                c.options.scales.y.ticks.stepSize = chartMax <= 100 ? 25 : 50;
+                c.update();
+            }
+        });
+
+        // Comparison: actual rate vs target rate (添付率)
+        var actualRates = [], targetRates = [];
+        var bases = [
+            { item: data.table1.warranty, base: data.table1.hard.actual },
+            { item: data.table1.support, base: data.table1.hard.actual },
+            { item: data.table2.usedSupport, base: data.table2.used.actual }
+        ];
+        bases.forEach(function(b) {
+            var rate = b.base > 0 ? Math.round(b.item.actual / b.base * 1000) / 10 : 0;
+            actualRates.push(rate);
+            targetRates.push(parseFloat(String(b.item.targetRate).replace('%', '')) || 0);
+        });
+        var compChart = mCharts['m-comparisonChart'];
+        if (compChart) {
+            compChart.data.datasets[0].data = actualRates;
+            compChart.data.datasets[1].data = targetRates;
+            compChart.update();
+        }
+    }
+
+    // --- SERVICE CHARTS ---
+    function mInitServiceCharts() {
+        if (mChartsInitialized.service) return;
+        mChartsInitialized.service = true;
+
+        var svcData = (typeof getServiceData === 'function') ? getServiceData() : { total:{sales:0,target:0}, maint:{sales:0,target:0}, setup:{sales:0,target:0} };
+        var donutData = (typeof buildServiceDonutData === 'function') ? buildServiceDonutData(svcData) : { labels:['メンテ','設定','未達分'], data:[0,0,1], colors:['#DA7756','#5A9AC8','rgba(26,24,20,0.08)'] };
+
+        mCreateChart('m-serviceDonut', {
+            type: 'doughnut',
+            data: { labels: donutData.labels, datasets: [{ data: donutData.data, backgroundColor: donutData.colors, borderWidth: 0, cutout: '80%' }] },
+            options: { responsive: true, maintainAspectRatio: true, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { filter: function(t){ return t.label!=='未達分'; } } } }
+        });
+
+        var breakOpts = mBarOptions(function(v) { return '\xA5' + (v/1000).toFixed(0) + 'k'; });
+        breakOpts.scales.y.max = undefined;
+        breakOpts.plugins = { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 10, font: { size: 9 } } } };
+        mCreateChart('m-serviceBreakdownChart', {
+            type: 'bar',
+            data: { labels: ['全体','メンテ','設定'], datasets: [
+                { label: '売上', data: [svcData.total.sales, svcData.maint.sales, svcData.setup.sales], backgroundColor: ['#5C4A3D', brandColors.redBright, brandColors.blueBright], borderRadius: 4, borderSkipped: false, barThickness: 28 },
+                { label: '目標', data: [svcData.total.target, svcData.maint.target, svcData.setup.target], backgroundColor: 'rgba(138,131,120,0.2)', borderColor: brandColors.gray, borderWidth: 1, borderRadius: 4, borderSkipped: false, barThickness: 28 }
+            ] },
+            options: breakOpts
+        });
+
+        mUpdateServiceCharts();
+    }
+
+    function mInitServicePreviewCharts() {
+        if (mPreviewChartsInitialized.service) return;
+        mPreviewChartsInitialized.service = true;
+
+        var svcData = (typeof getServiceData === 'function') ? getServiceData() : { total:{sales:0,target:0}, maint:{sales:0,target:0}, setup:{sales:0,target:0} };
+        var donutData = (typeof buildServiceDonutData === 'function') ? buildServiceDonutData(svcData) : { labels:[], data:[], colors:[] };
+
+        mCreateChart('m-serviceDonutPreview', {
+            type: 'doughnut',
+            data: { labels: donutData.labels, datasets: [{ data: donutData.data, backgroundColor: donutData.colors, borderWidth: 0, cutout: '80%' }] },
+            options: { responsive: true, maintainAspectRatio: true, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { filter: function(t){ return t.label!=='未達分'; } } } }
+        });
+
+        mUpdateServiceCharts();
+    }
+
+    function mUpdateServiceCharts() {
+        if (typeof getServiceData !== 'function') return;
+        var svcData = getServiceData();
+        var allRate = svcData.total.target > 0 ? Math.round(svcData.total.sales / svcData.total.target * 100) : 0;
+
+        // Donut
+        if (typeof buildServiceDonutData === 'function') {
+            var dd = buildServiceDonutData(svcData);
+            ['m-serviceDonut','m-serviceDonutPreview'].forEach(function(id) {
+                var c = mCharts[id];
+                if (c) { c.data.labels = dd.labels; c.data.datasets[0].data = dd.data; c.data.datasets[0].backgroundColor = dd.colors; c.update(); }
+            });
+        }
+        setElText('m-svcDonutValue', allRate + '%');
+        setElText('m-svcDonutValuePreview', allRate + '%');
+
+        // Breakdown bar
+        var bc = mCharts['m-serviceBreakdownChart'];
+        if (bc) {
+            bc.data.datasets[0].data = [svcData.total.sales, svcData.maint.sales, svcData.setup.sales];
+            bc.data.datasets[1].data = [svcData.total.target, svcData.maint.target, svcData.setup.target];
+            bc.update();
+        }
+    }
+
+    // --- HARDWARE CHARTS ---
+    function mInitHardwareCharts() {
+        if (mChartsInitialized.hardware) return;
+        mChartsInitialized.hardware = true;
+
+        var hwData = (typeof getHardwareData === 'function') ? getHardwareData() : { total:{budget:0,progress:0}, camera:{budget:0,progress:0}, lens:{budget:0,progress:0} };
+        var donutData = (typeof buildHardwareDonutData === 'function') ? buildHardwareDonutData(hwData) : { labels:[], data:[], colors:[] };
+
+        mCreateChart('m-hardwareDonut', {
+            type: 'doughnut',
+            data: { labels: donutData.labels, datasets: [{ data: donutData.data, backgroundColor: donutData.colors, borderWidth: 0, cutout: '80%' }] },
+            options: { responsive: true, maintainAspectRatio: true, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { filter: function(t){ return t.label!=='未達分'; } } } }
+        });
+
+        mUpdateHardwareCharts();
+    }
+
+    function mInitHardwarePreviewCharts() {
+        if (mPreviewChartsInitialized.hardware) return;
+        mPreviewChartsInitialized.hardware = true;
+
+        var hwData = (typeof getHardwareData === 'function') ? getHardwareData() : { total:{budget:0,progress:0}, camera:{budget:0,progress:0}, lens:{budget:0,progress:0} };
+        var donutData = (typeof buildHardwareDonutData === 'function') ? buildHardwareDonutData(hwData) : { labels:[], data:[], colors:[] };
+
+        mCreateChart('m-hardwareDonutPreview', {
+            type: 'doughnut',
+            data: { labels: donutData.labels, datasets: [{ data: donutData.data, backgroundColor: donutData.colors, borderWidth: 0, cutout: '80%' }] },
+            options: { responsive: true, maintainAspectRatio: true, animation: { duration: 500 }, plugins: { legend: { display: false }, tooltip: { filter: function(t){ return t.label!=='未達分'; } } } }
+        });
+
+        mUpdateHardwareCharts();
+    }
+
+    function mUpdateHardwareCharts() {
+        if (typeof getHardwareData !== 'function') return;
+        var hwData = getHardwareData();
+        var allRate = hwData.total.budget > 0 ? Math.round(hwData.total.progress / hwData.total.budget * 100) : 0;
+
+        if (typeof buildHardwareDonutData === 'function') {
+            var dd = buildHardwareDonutData(hwData);
+            ['m-hardwareDonut','m-hardwareDonutPreview'].forEach(function(id) {
+                var c = mCharts[id];
+                if (c) { c.data.labels = dd.labels; c.data.datasets[0].data = dd.data; c.data.datasets[0].backgroundColor = dd.colors; c.update(); }
+            });
+        }
+        setElText('m-hwDonutValue', allRate + '%');
+        setElText('m-hwDonutValuePreview', allRate + '%');
+    }
+
+    // --- Update all visible mobile charts ---
+    function mUpdateAllCharts() {
+        if (mChartsInitialized.warranty || mPreviewChartsInitialized.warranty) mUpdateWarrantyCharts();
+        if (mChartsInitialized.service || mPreviewChartsInitialized.service) mUpdateServiceCharts();
+        if (mChartsInitialized.hardware || mPreviewChartsInitialized.hardware) mUpdateHardwareCharts();
+    }
+
+    // ===================================================
+    // 6. MOBILE UI CONTROLS
+    // ===================================================
+    function mSetView(view) {
+        mCurrentView = view;
+        var titles = { warranty: '保証 進捗', service: 'サービス 進捗', hardware: 'ハード 進捗' };
+        setElText('m-title', titles[view] || titles.warranty);
+
+        // Tab states
+        document.getElementById('m-warrantyTab').classList.toggle('active', view === 'warranty');
+        document.getElementById('m-serviceTab').classList.toggle('active', view === 'service');
+        document.getElementById('m-hardwareTab').classList.toggle('active', view === 'hardware');
+
+        // View visibility
+        document.getElementById('m-warrantyView').classList.toggle('active', view === 'warranty');
+        document.getElementById('m-serviceView').classList.toggle('active', view === 'service');
+        document.getElementById('m-hardwareView').classList.toggle('active', view === 'hardware');
+
+        // Also sync desktop view for data consistency
+        if (typeof setView === 'function') setView(view);
+
+        // Refresh display
+        mSyncFromDesktop();
+    }
+
+    function mSetMode(mode) {
+        mIsEditMode = mode === 'edit';
+        var app = document.getElementById('mobileAppInner');
+        if (!app) return;
+
+        if (mIsEditMode) {
+            app.classList.remove('preview-mode');
+        } else {
+            app.classList.add('preview-mode');
+        }
+
+        document.getElementById('m-editModeBtn').classList.toggle('active', mIsEditMode);
+        document.getElementById('m-previewModeBtn').classList.toggle('active', !mIsEditMode);
+
+        // Also sync desktop mode
+        if (typeof setMode === 'function') setMode(mode);
+
+        mSyncFromDesktop();
+
+        // Lazy init preview charts when switching to preview
+        if (!mIsEditMode) {
+            setTimeout(function() {
+                mInitWarrantyPreviewCharts();
+                mInitServicePreviewCharts();
+                mInitHardwarePreviewCharts();
+                mUpdateAllCharts();
+            }, 100);
+        }
+    }
+
+    function mToggleChart(view) {
+        var section = document.getElementById('m-' + view + 'ChartSection');
+        var btn = document.getElementById('m-' + view + 'ChartToggle');
+        if (!section || !btn) return;
+        var isOpen = section.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+        btn.innerHTML = (isOpen ? '&#9650; グラフを隠す' : '&#9660; グラフを表示');
+
+        // Lazy init charts on first open (needs time for layout reflow)
+        if (isOpen) {
+            setTimeout(function() {
+                if (view === 'warranty') { mInitWarrantyCharts(); mUpdateWarrantyCharts(); }
+                else if (view === 'service') { mInitServiceCharts(); mUpdateServiceCharts(); }
+                else if (view === 'hardware') { mInitHardwareCharts(); mUpdateHardwareCharts(); }
+                // Force resize all visible charts
+                Object.keys(mCharts).forEach(function(id) { if (mCharts[id]) mCharts[id].resize(); });
+            }, 200);
+        }
+    }
+
+    // ===================================================
+    // 6. INITIALIZATION
+    // ===================================================
+    function mInit() {
+        // Update date
+        var now = new Date();
+        setElText('m-updateDate', (now.getMonth() + 1) + '/' + now.getDate() + ' 更新');
+
+        // Event: Tab buttons
+        document.getElementById('m-warrantyTab').addEventListener('click', function() { mSetView('warranty'); });
+        document.getElementById('m-serviceTab').addEventListener('click', function() { mSetView('service'); });
+        document.getElementById('m-hardwareTab').addEventListener('click', function() { mSetView('hardware'); });
+
+        // Event: Mode buttons
+        document.getElementById('m-editModeBtn').addEventListener('click', function() { mSetMode('edit'); });
+        document.getElementById('m-previewModeBtn').addEventListener('click', function() { mSetMode('preview'); });
+
+        // Event: Save button
+        document.getElementById('m-saveBtn').addEventListener('click', function() {
+            // Sync all mobile inputs to desktop first
+            Object.keys(inputSyncMap).forEach(function(mId) {
+                var mEl = document.getElementById(mId);
+                if (mEl) syncToDesktop(mId);
+            });
+            // Then use shared save
+            if (typeof saveData === 'function') saveData();
+        });
+
+        // Event: Chart toggles
+        document.getElementById('m-warrantyChartToggle').addEventListener('click', function() { mToggleChart('warranty'); });
+        document.getElementById('m-serviceChartToggle').addEventListener('click', function() { mToggleChart('service'); });
+        document.getElementById('m-hardwareChartToggle').addEventListener('click', function() { mToggleChart('hardware'); });
+
+        // Event: Hardware baseline camera select
+        var hwSelect = document.getElementById('m-hwBaselineCamera');
+        if (hwSelect) {
+            hwSelect.addEventListener('change', function() {
+                var wrap = document.getElementById('m-hwCustomPriceWrap');
+                if (wrap) wrap.style.display = this.value === 'custom' ? '' : 'none';
+                syncToDesktop('m-hwBaselineCamera');
+                triggerDesktopCalc();
+            });
+        }
+
+        // Event: All mobile inputs — sync on input
+        Object.keys(inputSyncMap).forEach(function(mId) {
+            var mEl = document.getElementById(mId);
+            if (!mEl) return;
+            mEl.addEventListener('input', function() {
+                syncToDesktop(mId);
+                triggerDesktopCalc();
+                setTimeout(mSyncFromDesktop, 200);
+            });
+        });
+
+        // Hook into desktop data load completion
+        var _origShowToast = window.showToast;
+        if (_origShowToast) {
+            window.showToast = function(msg, isWarning) {
+                _origShowToast(msg, isWarning);
+                if (msg === 'データを読み込みました') {
+                    setTimeout(function() {
+                        mSyncFromDesktop();
+                        // Mobile always starts on warranty view
+                        mSetViewSilent('warranty');
+                    }, 200);
+                }
+            };
+        } else {
+            // Fallback: poll until data is loaded
+            var pollCount = 0;
+            var pollTimer = setInterval(function() {
+                pollCount++;
+                if (pollCount > 20) { clearInterval(pollTimer); return; }
+                var dateEl = document.getElementById('updateDate');
+                if (dateEl && dateEl.textContent) {
+                    clearInterval(pollTimer);
+                    mSyncFromDesktop();
+                }
+            }, 500);
+        }
+    }
+
+    // Set view without triggering desktop setView (for initial load)
+    function mSetViewSilent(view) {
+        mCurrentView = view;
+        var titles = { warranty: '保証 進捗', service: 'サービス 進捗', hardware: 'ハード 進捗' };
+        setElText('m-title', titles[view] || titles.warranty);
+        document.getElementById('m-warrantyTab').classList.toggle('active', view === 'warranty');
+        document.getElementById('m-serviceTab').classList.toggle('active', view === 'service');
+        document.getElementById('m-hardwareTab').classList.toggle('active', view === 'hardware');
+        document.getElementById('m-warrantyView').classList.toggle('active', view === 'warranty');
+        document.getElementById('m-serviceView').classList.toggle('active', view === 'service');
+        document.getElementById('m-hardwareView').classList.toggle('active', view === 'hardware');
+    }
+
+    function triggerDesktopCalc() {
+        if (typeof calculateAll === 'function') calculateAll();
+        if (typeof calculateServiceAll === 'function') calculateServiceAll();
+        if (typeof calculateHardwareAll === 'function') calculateHardwareAll();
+        if (typeof updateStats === 'function') updateStats();
+        if (typeof updateServiceProgress === 'function') updateServiceProgress();
+        if (typeof updateHardwareProgress === 'function') updateHardwareProgress();
+        if (typeof updateBudget === 'function') updateBudget();
+    }
+
+    // Run init after DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', mInit);
+    } else {
+        mInit();
+    }
+})();
+</script>

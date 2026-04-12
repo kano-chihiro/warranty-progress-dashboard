@@ -1,0 +1,2043 @@
+    <script>
+        // Global state
+        let isEditMode = true;
+        let isItemsUnlocked = false;
+        let achievementChart = null;
+        let comparisonChart = null;
+        let overallDonutChart = null;
+
+        // Service view state
+        let currentView = 'warranty';
+        let serviceDonutChart = null;
+        let serviceBreakdownChart = null;
+        let serviceAchievementChart = null;
+        let serviceChartsInitialized = false;
+        let serviceChartsInitializing = false;
+
+        // Hardware view state
+        let hardwareDonutChart = null;
+        let hardwareAchievementChart = null;
+        let hardwareChartsInitialized = false;
+        let hardwareChartsInitializing = false;
+
+        // Noesis KAi Brand Colors
+        const brandColors = {
+            green: '#5A8A5A',
+            greenLight: 'rgba(90, 138, 90, 0.15)',
+            red: '#C15F3C',
+            redLight: 'rgba(193, 95, 60, 0.15)',
+            blue: '#2D5A7B',
+            blueLight: 'rgba(45, 90, 123, 0.15)',
+            gray: '#8A8378',
+            grayLight: 'rgba(138, 131, 120, 0.2)',
+            accent: '#2D5A7B',
+            text: '#1A1814',
+            textSecondary: '#5C564C',
+            // Service view bright variants
+            redBright: '#DA7756',
+            blueBright: '#5A9AC8',
+            // Hardware view colors
+            bronze: '#8B7355',
+            gold: '#C4A35A',
+            teal: '#5A7C8A'
+        };
+
+        /** 保存済みの目標添付率（"40%" / "40" / 40）を数値に統一 */
+        function parseTargetRateStored(val) {
+            return parseFloat(String(val == null ? '' : val).replace(/%/g, '').trim()) || 0;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            // UI 初期化（データロード前に実行可能な処理）
+            setupHardwareBaselineHandler();
+            setupHardwareTableListeners();
+            updateDate();
+            setupEventListeners();
+            initCharts();
+
+            // Google Sheets からデータをロード
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (data) {
+                        applyLoadedData(data);
+                    }
+                    // データ適用後に計算・描画
+                    calculateAll();
+                    calculateServiceAll();
+                    calculateHardwareAll();
+                    updateCharts();
+                    updateStats();
+                    updateServiceProgress();
+                    updateHardwareProgress();
+                    showToast('データを読み込みました');
+                })
+                .withFailureHandler(function(err) {
+                    console.error('Failed to load data from Sheets:', err);
+                    // 計算・描画はデフォルト値で実行
+                    calculateAll();
+                    calculateServiceAll();
+                    calculateHardwareAll();
+                    updateCharts();
+                    updateStats();
+                    updateServiceProgress();
+                    updateHardwareProgress();
+                    showToast('データ読み込みに失敗しました', true);
+                })
+                .loadAllData();
+
+            // 印刷時にChart.jsのチャートを適切にリサイズし、ラベルがはみ出さないようにする
+            window.addEventListener('beforeprint', function() {
+                // バーチャートのX軸ラベル・フォント・バー幅を印刷用に調整
+                [achievementChart, comparisonChart].forEach(function(chart) {
+                    if (chart) {
+                        if (chart.options.scales && chart.options.scales.x) {
+                            chart.options.scales.x.ticks.font = { size: 9, weight: 500 };
+                            chart.options.scales.x.ticks.maxRotation = 0;
+                            chart.options.scales.x.ticks.minRotation = 0;
+                        }
+                        if (chart.options.scales && chart.options.scales.y) {
+                            chart.options.scales.y.ticks.font = { size: 9, family: "'IBM Plex Mono', monospace" };
+                        }
+                        chart.options.layout.padding = { left: 4, right: 8, top: 4, bottom: 2 };
+                        // バーの太さを印刷サイズに合わせて調整
+                        chart.data.datasets.forEach(function(ds) {
+                            ds._origBarThickness = ds.barThickness;
+                            ds.barThickness = Math.max(18, Math.round((ds.barThickness || 28) * 0.65));
+                        });
+                        // legend のフォントサイズも調整
+                        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                            chart.options.plugins.legend.labels.font = { size: 8 };
+                            chart.options.plugins.legend.labels.padding = 8;
+                            chart.options.plugins.legend.labels.boxWidth = 10;
+                        }
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+                // ドーナツチャートもリサイズ
+                if (overallDonutChart) {
+                    overallDonutChart.resize();
+                    overallDonutChart.update('none');
+                }
+                // サービスチャートもリサイズ
+                [serviceDonutChart, serviceBreakdownChart, serviceAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+                // ハードチャートもリサイズ
+                [hardwareDonutChart, hardwareAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+            });
+
+            window.addEventListener('afterprint', function() {
+                // 印刷後に元の設定に戻す
+                [achievementChart, comparisonChart].forEach(function(chart) {
+                    if (chart) {
+                        if (chart.options.scales && chart.options.scales.x) {
+                            chart.options.scales.x.ticks.font = { size: 10, weight: 500 };
+                            delete chart.options.scales.x.ticks.maxRotation;
+                            delete chart.options.scales.x.ticks.minRotation;
+                        }
+                        if (chart.options.scales && chart.options.scales.y) {
+                            chart.options.scales.y.ticks.font = { size: 10, family: "'IBM Plex Mono', monospace" };
+                        }
+                        chart.options.layout.padding = { left: 5, right: 15 };
+                        chart.data.datasets.forEach(function(ds) {
+                            if (ds._origBarThickness !== undefined) {
+                                ds.barThickness = ds._origBarThickness;
+                                delete ds._origBarThickness;
+                            }
+                        });
+                        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+                            chart.options.plugins.legend.labels.font = { size: 10 };
+                            chart.options.plugins.legend.labels.padding = 16;
+                            chart.options.plugins.legend.labels.boxWidth = 12;
+                        }
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+                if (overallDonutChart) {
+                    overallDonutChart.resize();
+                    overallDonutChart.update('none');
+                }
+                [serviceDonutChart, serviceBreakdownChart, serviceAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+                [hardwareDonutChart, hardwareAchievementChart].forEach(function(chart) {
+                    if (chart) {
+                        chart.resize();
+                        chart.update('none');
+                    }
+                });
+            });
+        });
+
+        // Update date
+        function updateDate() {
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            document.getElementById('updateDate').textContent = `${month}/${day} 更新`;
+        }
+
+        // Setup event listeners
+        function setupEventListeners() {
+            document.getElementById('editModeBtn').addEventListener('click', () => setMode('edit'));
+            document.getElementById('previewModeBtn').addEventListener('click', () => setMode('preview'));
+            document.getElementById('unlockBtn').addEventListener('click', toggleItemsLock);
+
+            document.querySelectorAll('.data-table input[type="number"]').forEach(input => {
+                input.addEventListener('input', () => {
+                    calculateAll();
+                    updateCharts();
+                    updateStats();
+                });
+            });
+
+            // 予算入力欄のイベントリスナー
+            document.getElementById('warrantyBudget').addEventListener('input', () => {
+                updateBudget();
+            });
+            document.getElementById('warrantyActualAmount').addEventListener('input', () => {
+                updateBudget();
+            });
+
+            // サービステーブルのイベントリスナー
+            document.querySelectorAll('.service-table input[type="number"]').forEach(input => {
+                input.addEventListener('input', () => {
+                    calculateServiceAll();
+                    if (serviceChartsInitialized) {
+                        updateServiceCharts();
+                    }
+                    updateServiceProgress();
+                });
+            });
+
+            // サービス予算設定のイベントリスナー
+            ['svcBudgetBase', 'svcTargetMaint', 'svcTargetSetup'].forEach(id => {
+                document.getElementById(id).addEventListener('input', () => {
+                    calculateServiceAll();
+                    updateServiceCharts();
+                    updateServiceProgress();
+                });
+            });
+        }
+
+        // Toggle items lock
+        function toggleItemsLock() {
+            isItemsUnlocked = !isItemsUnlocked;
+            const container = document.getElementById('mainContainer');
+            const btn = document.getElementById('unlockBtn');
+
+            if (isItemsUnlocked) {
+                container.classList.add('items-unlocked');
+                btn.classList.add('unlocked');
+                btn.textContent = '編集可';
+            } else {
+                container.classList.remove('items-unlocked');
+                btn.classList.remove('unlocked');
+                btn.textContent = 'ロック中';
+            }
+        }
+
+        // Set mode
+        function setMode(mode) {
+            isEditMode = mode === 'edit';
+            const container = document.getElementById('mainContainer');
+            const progressPanel = document.querySelector('.progress-panel');
+            const leftPanel = document.querySelector('.left-panel');
+            const rightPanel = document.querySelector('.right-panel');
+
+            if (isEditMode) {
+                container.classList.remove('preview-mode');
+                container.classList.add('edit-mode');
+                document.getElementById('editModeBtn').classList.add('active');
+                document.getElementById('previewModeBtn').classList.remove('active');
+                document.getElementById('unlockBtn').style.display = 'block';
+
+                // Move progress panel back to left panel (warranty view)
+                if (progressPanel) {
+                    const warrantyView = document.getElementById('warrantyView');
+                    if (warrantyView) warrantyView.appendChild(progressPanel);
+                }
+            } else {
+                container.classList.remove('edit-mode');
+                container.classList.add('preview-mode');
+                document.getElementById('editModeBtn').classList.remove('active');
+                document.getElementById('previewModeBtn').classList.add('active');
+                document.getElementById('unlockBtn').style.display = 'none';
+
+                // Move progress panel to right panel for preview mode
+                if (progressPanel) {
+                    const warrantyCharts = document.getElementById('warrantyCharts');
+                    if (warrantyCharts) warrantyCharts.appendChild(progressPanel);
+                }
+            }
+
+            // ハード: カメラ残り表示をプレビューモードに応じて更新
+            if (currentView === 'hardware') {
+                updateHardwareProgress();
+            }
+
+            // Resize charts after mode change
+            setTimeout(() => {
+                if (currentView === 'warranty') {
+                    if (achievementChart) achievementChart.resize();
+                    if (comparisonChart) comparisonChart.resize();
+                    if (overallDonutChart) overallDonutChart.resize();
+                } else if (currentView === 'hardware') {
+                    if (hardwareDonutChart) hardwareDonutChart.resize();
+                    if (hardwareAchievementChart) hardwareAchievementChart.resize();
+                } else {
+                    if (serviceDonutChart) serviceDonutChart.resize();
+                    if (serviceBreakdownChart) serviceBreakdownChart.resize();
+                    if (serviceAchievementChart) serviceAchievementChart.resize();
+                }
+            }, 100);
+        }
+
+        // Set view (warranty / service / hardware)
+        function setView(view) {
+            currentView = view;
+
+            // Toggle button states
+            document.getElementById('warrantyViewBtn').classList.toggle('active', view === 'warranty');
+            document.getElementById('serviceViewBtn').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareViewBtn').classList.toggle('active', view === 'hardware');
+
+            // Toggle left panel views
+            document.getElementById('warrantyView').classList.toggle('active', view === 'warranty');
+            document.getElementById('serviceView').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareView').classList.toggle('active', view === 'hardware');
+
+            // Toggle right panel views
+            document.getElementById('warrantyCharts').classList.toggle('active', view === 'warranty');
+            document.getElementById('serviceCharts').classList.toggle('active', view === 'service');
+            document.getElementById('hardwareCharts').classList.toggle('active', view === 'hardware');
+
+            // Update title
+            const title = document.querySelector('.header-title h1');
+            if (title) {
+                const titles = { warranty: '保証 進捗ダッシュボード', service: '有料サービス 進捗ダッシュボード', hardware: 'ハード 進捗ダッシュボード' };
+                title.textContent = titles[view] || titles.warranty;
+            }
+
+            // Lazy-initialize service charts on first switch
+            if (view === 'service' && !serviceChartsInitialized && !serviceChartsInitializing) {
+                serviceChartsInitializing = true;
+                requestAnimationFrame(() => {
+                    try {
+                        initServiceCharts();
+                        serviceChartsInitialized = true;
+                        updateServiceCharts();
+                    } finally {
+                        serviceChartsInitializing = false;
+                    }
+                });
+            } else if (view === 'service') {
+                setTimeout(() => {
+                    if (serviceDonutChart) serviceDonutChart.resize();
+                    if (serviceBreakdownChart) serviceBreakdownChart.resize();
+                    if (serviceAchievementChart) serviceAchievementChart.resize();
+                    updateServiceCharts();
+                }, 50);
+            } else if (view === 'hardware' && !hardwareChartsInitialized && !hardwareChartsInitializing) {
+                hardwareChartsInitializing = true;
+                requestAnimationFrame(() => {
+                    try {
+                        initHardwareCharts();
+                        hardwareChartsInitialized = true;
+                        updateHardwareCharts();
+                    } finally {
+                        hardwareChartsInitializing = false;
+                    }
+                });
+            } else if (view === 'hardware') {
+                setTimeout(() => {
+                    if (hardwareDonutChart) hardwareDonutChart.resize();
+                    if (hardwareAchievementChart) hardwareAchievementChart.resize();
+                    updateHardwareCharts();
+                }, 50);
+            } else {
+                setTimeout(() => {
+                    if (achievementChart) achievementChart.resize();
+                    if (comparisonChart) comparisonChart.resize();
+                    if (overallDonutChart) overallDonutChart.resize();
+                }, 50);
+            }
+
+            // View state は saveData() 時にまとめて保存
+        }
+
+        // Calculate all rates
+        function calculateAll() {
+            calculateTableRates('table1', 'hard');
+            calculateTableRates('table2', 'used');
+            updateStats();
+            updateBudget();
+        }
+
+        function calculateTableRates(tableId, baseRowKey) {
+            const table = document.getElementById(tableId);
+            const baseRow = table.querySelector(`tr[data-row="${baseRowKey}"]`);
+            const baseActual = parseInt(baseRow.querySelector('input[data-field="actual"]').value) || 0;
+
+            // 5年間保証の件数を取得（安心サポートの母数として使用）
+            let warrantyActual = 0;
+            if (tableId === 'table1') {
+                const warrantyRow = table.querySelector('tr[data-row="warranty"]');
+                if (warrantyRow) {
+                    warrantyActual = parseInt(warrantyRow.querySelector('input[data-field="actual"]').value) || 0;
+                }
+            }
+
+            table.querySelectorAll('tbody tr').forEach(row => {
+                const isBase = row.querySelector('input[data-base="true"]');
+                if (isBase) return;
+
+                const actualInput = row.querySelector('input[data-field="actual"]');
+                const targetInput = row.querySelector('input[data-field="target"]');
+                const actualRateInput = row.querySelector('input[data-field="actualRate"]');
+                const targetRateInput = row.querySelector('input[data-field="targetRate"]');
+                const achievementIcon = row.querySelector('.achievement-icon');
+                const rowColor = row.dataset.color || 'green';
+                const rowKey = row.dataset.row;
+
+                const actual = parseInt(actualInput.value) || 0;
+                const target = parseInt(targetInput.value) || 0;
+
+                // 安心サポートは5年間保証獲得件数を母数とする
+                let denominator = baseActual;
+                if (rowKey === 'support') {
+                    denominator = warrantyActual;
+                }
+
+                let actualRate = 0;
+                if (denominator > 0) {
+                    actualRate = (actual / denominator) * 100;
+                    actualRateInput.value = actualRate.toFixed(1) + '%';
+                } else {
+                    actualRateInput.value = '-';
+                }
+
+                const targetRate = parseTargetRateStored(targetRateInput.value);
+
+                const achievedCount = actual >= target && target > 0;
+                const achievedRate = actualRate >= targetRate && targetRate > 0;
+                const achieved = achievedCount && achievedRate;
+                const partialAchieved = achievedCount && !achievedRate;
+
+                row.classList.remove('achieved-green', 'achieved-red', 'achieved-blue', 'partial-green', 'partial-red', 'partial-blue');
+
+                if (achieved) {
+                    row.classList.add(`achieved-${rowColor}`);
+                    achievementIcon.textContent = 'CLEAR! 👍';
+                    achievementIcon.style.color = brandColors[rowColor];
+                    achievementIcon.style.fontWeight = '700';
+                } else if (partialAchieved) {
+                    row.classList.add(`partial-${rowColor}`);
+                    achievementIcon.textContent = '件数CLEAR!';
+                    achievementIcon.style.color = brandColors[rowColor];
+                    achievementIcon.style.fontWeight = '600';
+                } else {
+                    achievementIcon.textContent = '-';
+                    achievementIcon.style.color = brandColors.gray;
+                    achievementIcon.style.fontWeight = '400';
+                }
+            });
+        }
+
+        // Update stats
+        function updateStats() {
+            const data = getTableData();
+
+            const warrantyRate = data.table1.hard.actual > 0
+                ? (data.table1.warranty.actual / data.table1.hard.actual * 100).toFixed(0)
+                : 0;
+            // 安心サポートは5年間保証獲得件数を母数とする
+            const supportRate = data.table1.warranty.actual > 0
+                ? (data.table1.support.actual / data.table1.warranty.actual * 100).toFixed(0)
+                : 0;
+            const usedRate = data.table2.used.actual > 0
+                ? (data.table2.usedSupport.actual / data.table2.used.actual * 100).toFixed(0)
+                : 0;
+
+            document.getElementById('statWarrantyRate').textContent = warrantyRate + '%';
+            document.getElementById('statSupportRate').textContent = supportRate + '%';
+            document.getElementById('statUsedRate').textContent = usedRate + '%';
+
+            // Update progress panel
+            updateProgressPanel(data);
+        }
+
+        // Update progress panel
+        function updateProgressPanel(data) {
+            // 5年間保証
+            updateProgressItem(
+                'Warranty',
+                data.table1.warranty.actual,
+                data.table1.warranty.target,
+                'green'
+            );
+
+            // 安心サポート
+            updateProgressItem(
+                'Support',
+                data.table1.support.actual,
+                data.table1.support.target,
+                'red'
+            );
+
+            // 中古まるサポ
+            updateProgressItem(
+                'Used',
+                data.table2.usedSupport.actual,
+                data.table2.usedSupport.target,
+                'blue'
+            );
+        }
+
+        function updateProgressItem(name, actual, target, color) {
+            const statusEl = document.getElementById(`progress${name}`);
+            const barEl = document.getElementById(`progressBar${name}`);
+            const runnerEl = document.getElementById(`runner${name}`);
+            const flagEl = document.getElementById(`flag${name}`);
+
+            if (!statusEl || !barEl) return;
+
+            const remaining = Math.max(0, target - actual);
+            const percentage = target > 0 ? Math.min(100, (actual / target) * 100) : 0;
+            const isAchieved = actual >= target && target > 0;
+            const isClose = remaining > 0 && remaining <= 2;
+
+            // Update progress bar
+            barEl.style.width = percentage + '%';
+
+            // Update character position and animation
+            if (runnerEl) {
+                runnerEl.style.left = percentage + '%';
+                const character = runnerEl.querySelector('.pixel-character');
+                if (character) {
+                    character.classList.remove('running', 'achieved', 'idle');
+                    if (isAchieved) {
+                        character.classList.add('achieved');
+                    } else if (percentage > 0) {
+                        character.classList.add('running');
+                    } else {
+                        character.classList.add('idle');
+                    }
+                }
+            }
+
+            // Update flag
+            if (flagEl) {
+                if (isAchieved) {
+                    flagEl.classList.add('reached');
+                } else {
+                    flagEl.classList.remove('reached');
+                }
+            }
+
+            // Update status text and style
+            statusEl.classList.remove('achieved', 'close');
+            if (isAchieved) {
+                statusEl.textContent = '達成!';
+                statusEl.classList.add('achieved');
+                barEl.classList.add('achieved');
+            } else if (isClose) {
+                statusEl.textContent = `あと${remaining}件!`;
+                statusEl.classList.add('close');
+                barEl.classList.remove('achieved');
+            } else if (target > 0) {
+                statusEl.textContent = `あと${remaining}件`;
+                barEl.classList.remove('achieved');
+            } else {
+                statusEl.textContent = '-';
+                barEl.classList.remove('achieved');
+            }
+        }
+
+        // 予算達成状況を更新
+        function updateBudget() {
+            const data = getTableData();
+
+            // 5年間保証の予算・実績金額を取得
+            const warrantyBudget = parseInt(document.getElementById('warrantyBudget').value) || 0;
+            const warrantyActualAmount = parseInt(document.getElementById('warrantyActualAmount').value) || 0;
+
+            // 安心サポートの予算・実績を計算（件数 × 3,000円）
+            const supportTarget = data.table1.support.target || 0;
+            const supportActual = data.table1.support.actual || 0;
+            const supportBudget = supportTarget * 3000;
+            const supportActualAmount = supportActual * 3000;
+
+            // 中古まるサポの予算・実績を計算（件数 × 4,000円）
+            const usedTarget = data.table2.usedSupport.target || 0;
+            const usedActual = data.table2.usedSupport.actual || 0;
+            const usedBudget = usedTarget * 4000;
+            const usedActualAmount = usedActual * 4000;
+
+            // 総予算・総実績を計算
+            const totalBudget = warrantyBudget + supportBudget + usedBudget;
+            const totalActual = warrantyActualAmount + supportActualAmount + usedActualAmount;
+
+            // 達成率を計算（100%上限を撤廃し、実際の達成率を表示）
+            const achievementRateRaw = totalBudget > 0 ? (totalActual / totalBudget) * 100 : 0;
+            const achievementRateBar = Math.min(100, achievementRateRaw); // バー幅用は100%上限
+            const isAchieved = totalActual >= totalBudget && totalBudget > 0;
+            const isOverAchieved = achievementRateRaw > 100;
+            const remaining = Math.max(0, totalBudget - totalActual);
+            const overAmount = Math.max(0, totalActual - totalBudget);
+
+            // 金額をフォーマット
+            const formatCurrency = (amount) => {
+                return '¥' + amount.toLocaleString();
+            };
+
+            // 表示を更新
+            document.getElementById('budgetCurrentDisplay').textContent = formatCurrency(totalActual);
+            document.getElementById('budgetTotalDisplay').textContent = formatCurrency(totalBudget);
+
+            const budgetBar = document.getElementById('budgetBar');
+            budgetBar.style.width = achievementRateBar + '%';
+            budgetBar.classList.toggle('achieved', isAchieved && !isOverAchieved);
+            budgetBar.classList.toggle('over-achieved', isOverAchieved);
+
+            // バーラベルに実際の達成率を表示
+            const barLabel = document.getElementById('budgetBarLabel');
+            barLabel.textContent = achievementRateRaw.toFixed(1) + '%';
+
+            // バーが短いとき（30%未満）はラベルをバーの外側に表示
+            if (achievementRateBar < 30) {
+                barLabel.style.right = 'auto';
+                barLabel.style.left = '100%';
+                barLabel.style.marginLeft = '8px';
+                barLabel.style.color = 'var(--nk-text, #1A1814)';
+            } else {
+                barLabel.style.right = '12px';
+                barLabel.style.left = 'auto';
+                barLabel.style.marginLeft = '0';
+                barLabel.style.color = '#fff';
+            }
+
+            // 100%超の場合、超過額をバー左側に表示
+            const overIndicator = document.getElementById('budgetOverIndicator');
+            if (isOverAchieved) {
+                overIndicator.textContent = '+' + formatCurrency(overAmount);
+            } else {
+                overIndicator.textContent = '';
+            }
+
+            // 内訳を更新
+            document.getElementById('budgetWarrantyDetail').textContent = `5年保証: ${formatCurrency(warrantyActualAmount)}`;
+            document.getElementById('budgetSupportDetail').textContent = `安心サポ: ${formatCurrency(supportActualAmount)}`;
+            document.getElementById('budgetUsedDetail').textContent = `中古サポ: ${formatCurrency(usedActualAmount)}`;
+
+            // 残り金額を更新
+            const remainingDisplay = document.getElementById('budgetRemainingDisplay');
+            if (isOverAchieved) {
+                remainingDisplay.textContent = `+${formatCurrency(overAmount)} 超過達成!`;
+                remainingDisplay.style.color = 'var(--color-green)';
+                remainingDisplay.style.fontWeight = '600';
+            } else if (isAchieved) {
+                remainingDisplay.textContent = '達成!';
+                remainingDisplay.style.color = 'var(--color-green)';
+                remainingDisplay.style.fontWeight = '600';
+            } else if (totalBudget > 0) {
+                remainingDisplay.textContent = `残り ${formatCurrency(remaining)}`;
+                remainingDisplay.style.color = 'var(--text-tertiary)';
+                remainingDisplay.style.fontWeight = '400';
+            } else {
+                remainingDisplay.textContent = '-';
+                remainingDisplay.style.color = 'var(--text-tertiary)';
+                remainingDisplay.style.fontWeight = '400';
+            }
+
+            // 円グラフ横の予算達成率メーターを更新
+            const meterValue = document.getElementById('budgetAchievementValue');
+            const meterSub = document.getElementById('budgetAchievementSub');
+            if (totalBudget > 0) {
+                meterValue.textContent = achievementRateRaw.toFixed(1) + '%';
+                meterValue.className = 'budget-achievement-meter-value ' + (isAchieved ? 'over-achieved' : 'under-achieved');
+                if (isOverAchieved) {
+                    meterSub.textContent = '+' + formatCurrency(overAmount);
+                    meterSub.className = 'budget-achievement-meter-sub over';
+                } else {
+                    meterSub.textContent = `残り ${formatCurrency(remaining)}`;
+                    meterSub.className = 'budget-achievement-meter-sub';
+                }
+            } else {
+                meterValue.textContent = '-';
+                meterValue.className = 'budget-achievement-meter-value';
+                meterSub.textContent = '予算未設定';
+                meterSub.className = 'budget-achievement-meter-sub';
+            }
+        }
+
+        // 100% line annotation config with clip to prevent overflow
+        const annotation100Line = {
+            type: 'line',
+            yMin: 100,
+            yMax: 100,
+            borderColor: '#C15F3C',
+            borderWidth: 2,
+            borderDash: [4, 3],
+            drawTime: 'beforeDatasetsDraw',
+            label: {
+                display: false
+            }
+        };
+
+        // Initialize charts
+        function initCharts() {
+            Chart.defaults.font.family = "'IBM Plex Sans', 'Noto Sans JP', sans-serif";
+            Chart.defaults.font.size = 11;
+            Chart.defaults.color = brandColors.textSecondary;
+
+            // Initialize Overall Donut Chart
+            initOverallDonut();
+
+            // Achievement Chart
+            const achievementCtx = document.getElementById('achievementChart').getContext('2d');
+            achievementChart = new Chart(achievementCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['5年間保証', '安心サポート', '中古まるサポ'],
+                    datasets: [{
+                        label: '達成率',
+                        data: [0, 0, 0],
+                        backgroundColor: [brandColors.green, brandColors.red, brandColors.blue],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 5,
+                            right: 15
+                        }
+                    },
+                    animation: {
+                        duration: 500,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            clip: true,
+                            annotations: {
+                                line100: annotation100Line
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                stepSize: 25,
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+
+            // Comparison Chart
+            const comparisonCtx = document.getElementById('comparisonChart').getContext('2d');
+            comparisonChart = new Chart(comparisonCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['5年間保証', '安心サポート', '中古まるサポ'],
+                    datasets: [
+                        {
+                            label: '実績率',
+                            data: [0, 0, 0],
+                            backgroundColor: [brandColors.green, brandColors.red, brandColors.blue],
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barThickness: 28
+                        },
+                        {
+                            label: '目標率',
+                            data: [0, 0, 0],
+                            backgroundColor: brandColors.grayLight,
+                            borderColor: brandColors.gray,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barThickness: 28
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: {
+                        padding: {
+                            left: 5,
+                            right: 15
+                        }
+                    },
+                    animation: {
+                        duration: 500,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                boxWidth: 12,
+                                padding: 16,
+                                font: { size: 10 }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                stepSize: 25,
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+
+            updateCharts();
+        }
+
+        // Initialize Overall Donut Chart
+        function initOverallDonut() {
+            const donutCtx = document.getElementById('overallDonutChart').getContext('2d');
+            overallDonutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['達成', '件数達成', '未達成'],
+                    datasets: [{
+                        data: [0, 0, 3],
+                        backgroundColor: [
+                            brandColors.green,
+                            'rgba(90, 138, 90, 0.35)',  // 件数達成（中間）は薄いグリーン
+                            'rgba(26, 24, 20, 0.08)'
+                        ],
+                        borderWidth: 0,
+                        cutout: '82%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: {
+                        duration: 600,
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { enabled: false }
+                    }
+                }
+            });
+        }
+
+        // Update Overall Donut Chart
+        function updateOverallDonut() {
+            const data = getTableData();
+
+            // Check achievement status for each item
+            const statuses = [
+                getItemAchievementStatus('warranty', data),
+                getItemAchievementStatus('support', data),
+                getItemAchievementStatus('usedSupport', data)
+            ];
+
+            const achievedCount = statuses.filter(s => s === 'achieved').length;
+            const partialCount = statuses.filter(s => s === 'partial').length;
+            const pendingCount = statuses.filter(s => s === 'pending').length;
+
+            // Update donut chart with 3 segments
+            if (overallDonutChart) {
+                overallDonutChart.data.datasets[0].data = [achievedCount, partialCount, pendingCount];
+                overallDonutChart.update();
+            }
+
+            // Update center value (完全達成のみカウント)
+            document.getElementById('donutValue').textContent = `${achievedCount}/3`;
+
+            // Update legend status
+            updateLegendStatus('legendWarranty', statuses[0]);
+            updateLegendStatus('legendSupport', statuses[1]);
+            updateLegendStatus('legendUsed', statuses[2]);
+        }
+
+        // Check item achievement status: 'achieved', 'partial', or 'pending'
+        function getItemAchievementStatus(itemKey, data) {
+            let item, base;
+            if (itemKey === 'warranty') {
+                item = data.table1.warranty;
+                base = data.table1.hard.actual;
+            } else if (itemKey === 'support') {
+                item = data.table1.support;
+                base = data.table1.warranty.actual; // 安心サポートは5年間保証を母数とする
+            } else {
+                item = data.table2.usedSupport;
+                base = data.table2.used.actual;
+            }
+
+            const achievedCount = item.actual >= item.target && item.target > 0;
+            const targetRate = parseTargetRateStored(item.targetRate);
+            const actualRate = base > 0 ? (item.actual / base) * 100 : 0;
+            const achievedRate = actualRate >= targetRate && targetRate > 0;
+
+            if (achievedCount && achievedRate) {
+                return 'achieved';
+            } else if (achievedCount && !achievedRate) {
+                return 'partial';
+            } else {
+                return 'pending';
+            }
+        }
+
+        // Update legend status with 3 states
+        function updateLegendStatus(elementId, status) {
+            const el = document.getElementById(elementId);
+            if (el) {
+                el.classList.remove('achieved', 'partial', 'pending');
+
+                if (status === 'achieved') {
+                    el.textContent = '達成!';
+                    el.classList.add('achieved');
+                } else if (status === 'partial') {
+                    el.textContent = '件数達成';
+                    el.classList.add('partial');
+                } else {
+                    el.textContent = '未達成';
+                    el.classList.add('pending');
+                }
+            }
+        }
+
+        // Calculate dynamic Y-axis max for achievement chart
+        function calculateAchievementChartMax(rates) {
+            const maxRate = Math.max(...rates);
+            // 100%未満なら100%をMAXに
+            if (maxRate <= 100) {
+                return 100;
+            }
+            // 100%を超えたら50%刻みで増やす
+            return Math.ceil(maxRate / 50) * 50;
+        }
+
+        // Update charts
+        function updateCharts() {
+            const data = getTableData();
+
+            const achievementRates = [
+                data.table1.warranty.target > 0 ? (data.table1.warranty.actual / data.table1.warranty.target * 100) : 0,
+                data.table1.support.target > 0 ? (data.table1.support.actual / data.table1.support.target * 100) : 0,
+                data.table2.usedSupport.target > 0 ? (data.table2.usedSupport.actual / data.table2.usedSupport.target * 100) : 0
+            ];
+
+            const actualRates = [
+                data.table1.hard.actual > 0 ? (data.table1.warranty.actual / data.table1.hard.actual * 100) : 0,
+                // 安心サポートは5年間保証獲得件数を母数とする
+                data.table1.warranty.actual > 0 ? (data.table1.support.actual / data.table1.warranty.actual * 100) : 0,
+                data.table2.used.actual > 0 ? (data.table2.usedSupport.actual / data.table2.used.actual * 100) : 0
+            ];
+
+            const targetRates = [
+                parseFloat(data.table1.warranty.targetRate) || 0,
+                parseFloat(data.table1.support.targetRate) || 0,
+                parseFloat(data.table2.usedSupport.targetRate) || 0
+            ];
+
+            // 達成率グラフのY軸を動的に調整
+            const chartMax = calculateAchievementChartMax(achievementRates);
+            achievementChart.options.scales.y.max = chartMax;
+            achievementChart.options.scales.y.ticks.stepSize = chartMax <= 100 ? 25 : 50;
+
+            achievementChart.data.datasets[0].data = achievementRates.map(r => Math.round(r * 10) / 10);
+            achievementChart.update();
+
+            comparisonChart.data.datasets[0].data = actualRates.map(r => Math.round(r * 10) / 10);
+            comparisonChart.data.datasets[1].data = targetRates;
+            comparisonChart.update();
+
+            // Update overall donut chart
+            updateOverallDonut();
+        }
+
+        // Get table data
+        function getTableData() {
+            return {
+                table1: {
+                    hard: getRowData('table1', 'hard'),
+                    warranty: getRowData('table1', 'warranty'),
+                    support: getRowData('table1', 'support')
+                },
+                table2: {
+                    used: getRowData('table2', 'used'),
+                    usedSupport: getRowData('table2', 'usedSupport')
+                }
+            };
+        }
+
+        function getRowData(tableId, rowKey) {
+            const table = document.getElementById(tableId);
+            const row = table.querySelector(`tr[data-row="${rowKey}"]`);
+            return {
+                name: row.querySelector('input[data-field="name"]').value,
+                actual: parseInt(row.querySelector('input[data-field="actual"]').value) || 0,
+                target: parseInt(row.querySelector('input[data-field="target"]').value) || 0,
+                targetRate: row.querySelector('input[data-field="targetRate"]').value
+            };
+        }
+
+        // Load warranty data from parsed object
+        function loadData(parsed) {
+            if (!parsed) return;
+            try {
+                var data = parsed.data ? parsed.data : parsed;
+                setRowData('table1', 'hard', data.table1.hard);
+                setRowData('table1', 'warranty', data.table1.warranty);
+                setRowData('table1', 'support', data.table1.support);
+                setRowData('table2', 'used', data.table2.used);
+                setRowData('table2', 'usedSupport', data.table2.usedSupport);
+                if (parsed.budget) {
+                    document.getElementById('warrantyBudget').value = parsed.budget.warrantyBudget || 0;
+                    document.getElementById('warrantyActualAmount').value = parsed.budget.warrantyActualAmount || 0;
+                }
+            } catch (e) {
+                console.error('Failed to load data:', e);
+            }
+        }
+
+        function setRowData(tableId, rowKey, data) {
+            const table = document.getElementById(tableId);
+            const row = table.querySelector(`tr[data-row="${rowKey}"]`);
+            if (!row || !data) return;
+
+            const nameInput = row.querySelector('input[data-field="name"]');
+            const actualInput = row.querySelector('input[data-field="actual"]');
+            const targetInput = row.querySelector('input[data-field="target"]');
+            const targetRateInput = row.querySelector('input[data-field="targetRate"]');
+
+            if (nameInput) nameInput.value = data.name || '';
+            if (actualInput) actualInput.value = data.actual || 0;
+            if (targetInput && !targetInput.hasAttribute('readonly')) targetInput.value = data.target || 0;
+            if (targetRateInput && !targetRateInput.hasAttribute('readonly')) {
+                const raw = data.targetRate;
+                if (raw == null || String(raw).trim() === '') {
+                    targetRateInput.value = '';
+                } else {
+                    const n = parseTargetRateStored(raw);
+                    targetRateInput.value = Number.isFinite(n) ? String(n) : '';
+                }
+            }
+        }
+
+        // Reset data (ロック項目以外をクリア)
+        function resetData() {
+            if (currentView === 'warranty') {
+                if (confirm('保証データをリセットしますか？\n（項目名・目標・予算はそのまま保持されます）')) {
+                    document.querySelectorAll('.data-table input[data-field="actual"]').forEach(input => {
+                        input.value = '';
+                    });
+                    document.getElementById('warrantyActualAmount').value = 0;
+                    calculateAll();
+                    updateCharts();
+                    updateStats();
+                    showToast('保証データをリセットしました');
+                }
+            } else if (currentView === 'hardware') {
+                if (confirm('ハードデータをリセットしますか？\n（予算設定はそのまま保持されます）')) {
+                    document.querySelectorAll('.hardware-table input[data-field="sales"]').forEach(input => {
+                        input.value = 0;
+                    });
+                    calculateHardwareAll();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    updateHardwareProgress();
+                    showToast('ハードデータをリセットしました');
+                }
+            } else {
+                if (confirm('有料サービスデータをリセットしますか？\n（サービス名・目標はそのまま保持されます）')) {
+                    document.querySelectorAll('.service-table input[data-field="customers"]').forEach(input => {
+                        if (input.type === 'number') input.value = 0;
+                    });
+                    document.querySelectorAll('.service-table input[data-field="sales"]').forEach(input => {
+                        if (input.type === 'number') input.value = 0;
+                    });
+                    calculateServiceAll();
+                    updateServiceCharts();
+                    updateServiceProgress();
+                    showToast('サービスデータをリセットしました');
+                }
+            }
+        }
+
+        // ===== Google Sheets データ連携 =====
+
+        /**
+         * 全データを収集（保存用）
+         */
+        function collectAllData() {
+            var data = getTableData();
+            var budgetData = {
+                warrantyBudget: parseInt(document.getElementById('warrantyBudget').value) || 0,
+                warrantyActualAmount: parseInt(document.getElementById('warrantyActualAmount').value) || 0
+            };
+            var warrantyObj = { data: data, budget: budgetData, savedAt: new Date().toISOString() };
+
+            var svcTableData = {};
+            ['serviceTable1', 'serviceTable2'].forEach(function(tableId) {
+                document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(function(row) {
+                    var key = row.dataset.service;
+                    if (!key) return;
+                    svcTableData[key] = {
+                        customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
+                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0
+                    };
+                });
+            });
+            var serviceObj = {
+                services: svcTableData,
+                budget: {
+                    budgetBase: parseInt(document.getElementById('svcBudgetBase').value) || 0,
+                    targetMaint: parseInt(document.getElementById('svcTargetMaint').value) || 0,
+                    targetSetup: parseInt(document.getElementById('svcTargetSetup').value) || 0
+                },
+                savedAt: new Date().toISOString()
+            };
+
+            var hardwareObj = getHardwareData();
+
+            return {
+                warrantyDashboardData: warrantyObj,
+                serviceDashboardData: serviceObj,
+                hardwareDashboardData: hardwareObj,
+                dashboardViewState: currentView
+            };
+        }
+
+        /**
+         * Google Sheets から読み込んだデータを DOM に適用
+         */
+        function applyLoadedData(cloud) {
+            if (!cloud) return false;
+
+            if (cloud.warrantyDashboardData) {
+                loadData(cloud.warrantyDashboardData);
+            }
+
+            if (cloud.serviceDashboardData) {
+                loadServiceData(cloud.serviceDashboardData);
+            }
+
+            if (cloud.hardwareDashboardData) {
+                loadHardwareData(cloud.hardwareDashboardData);
+            }
+
+            if (cloud.dashboardViewState && (cloud.dashboardViewState === 'warranty' || cloud.dashboardViewState === 'service' || cloud.dashboardViewState === 'hardware')) {
+                setView(cloud.dashboardViewState);
+            }
+
+            return true;
+        }
+
+        // Save data (all views) → Google Sheets
+        function saveData() {
+            var allData = collectAllData();
+
+            showToast('保存中...');
+
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result && result.ok) {
+                        showToast('データを保存しました');
+                    } else {
+                        showToast('保存に失敗しました', true);
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    console.error('Save failed:', err);
+                    showToast('保存エラー: ' + err.message, true);
+                })
+                .saveAllData(allData);
+        }
+
+        // ===== SERVICE VIEW FUNCTIONS =====
+
+        // Calculate service subtotals and ratios
+        function calculateServiceAll() {
+            calculateServiceTable('serviceTable1', 'maintSubtotal');
+            calculateServiceTable('serviceTable2', 'setupSubtotal');
+        }
+
+        function calculateServiceTable(tableId, subtotalId) {
+            const table = document.getElementById(tableId);
+            if (!table) return;
+
+            let totalCustomers = 0;
+            let totalSales = 0;
+
+            table.querySelectorAll('tbody tr:not(.subtotal-row)').forEach(row => {
+                // Skip child rows from subtotal (parent row has the correct total)
+                if (row.dataset.child) return;
+
+                const customersInput = row.querySelector('input[data-field="customers"]');
+                const salesInput = row.querySelector('input[data-field="sales"]');
+
+                if (customersInput && customersInput.type === 'number') {
+                    totalCustomers += parseInt(customersInput.value) || 0;
+                }
+                if (salesInput && salesInput.type === 'number') {
+                    totalSales += parseInt(salesInput.value) || 0;
+                }
+            });
+
+            // Update subtotal row
+            const subtotalRow = document.getElementById(subtotalId);
+            if (subtotalRow) {
+                const custCell = subtotalRow.querySelector('input[data-field="customers"]');
+                const salesCell = subtotalRow.querySelector('input[data-field="sales"]');
+                if (custCell) custCell.value = totalCustomers;
+                if (salesCell) salesCell.value = '¥' + totalSales.toLocaleString();
+            }
+
+        }
+
+        // Get service data summary
+        function getServiceData() {
+            const targetMaint = parseInt(document.getElementById('svcTargetMaint').value) || 0;
+            const targetSetup = parseInt(document.getElementById('svcTargetSetup').value) || 0;
+            const budgetBase = parseInt(document.getElementById('svcBudgetBase').value) || 0;
+
+            let maintSales = 0;
+            let maintCustomers = 0;
+            let setupSales = 0;
+            let setupCustomers = 0;
+
+            document.querySelectorAll('#serviceTable1 tbody tr:not(.subtotal-row)').forEach(row => {
+                if (row.dataset.child) return;
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                const c = parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0;
+                maintSales += s;
+                maintCustomers += c;
+            });
+
+            document.querySelectorAll('#serviceTable2 tbody tr:not(.subtotal-row)').forEach(row => {
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                const c = parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0;
+                setupSales += s;
+                setupCustomers += c;
+            });
+
+            const totalSales = maintSales + setupSales;
+            const totalTarget = targetMaint + targetSetup;
+            const totalCustomers = maintCustomers + setupCustomers;
+
+            return {
+                maint: { sales: maintSales, target: targetMaint, customers: maintCustomers },
+                setup: { sales: setupSales, target: targetSetup, customers: setupCustomers },
+                total: { sales: totalSales, target: totalTarget, customers: totalCustomers },
+                budgetBase: budgetBase
+            };
+        }
+
+        // Update service progress bars
+        function updateServiceProgress() {
+            const data = getServiceData();
+
+            updateServiceProgressItem('All', data.total.sales, data.total.target);
+            updateServiceProgressItem('Maint', data.maint.sales, data.maint.target);
+            updateServiceProgressItem('Setup', data.setup.sales, data.setup.target);
+
+            // Update stat cards
+            const allRate = data.total.target > 0 ? (data.total.sales / data.total.target * 100).toFixed(1) : '0';
+            const maintRate = data.maint.target > 0 ? (data.maint.sales / data.maint.target * 100).toFixed(1) : '0';
+            const setupRate = data.setup.target > 0 ? (data.setup.sales / data.setup.target * 100).toFixed(1) : '0';
+
+            document.getElementById('svcStatAll').textContent = allRate + '%';
+            document.getElementById('svcStatMaint').textContent = maintRate + '%';
+            document.getElementById('svcStatSetup').textContent = setupRate + '%';
+
+            // Update donut center
+            const donutValue = document.getElementById('svcDonutValue');
+            if (donutValue) donutValue.textContent = allRate + '%';
+
+            // Update legend statuses
+            updateServiceLegendStatus('svcLegendMaint', parseFloat(maintRate));
+            updateServiceLegendStatus('svcLegendSetup', parseFloat(setupRate));
+
+            // Update budget meter
+            const budget = data.budgetBase;
+            const actual = data.total.sales;
+            const remaining = budget - actual;
+
+            const budgetEl = document.getElementById('svcBudgetTotal');
+            const actualEl = document.getElementById('svcActualTotal');
+            const remainingEl = document.getElementById('svcRemainingTotal');
+
+            if (budgetEl) budgetEl.textContent = '¥' + budget.toLocaleString();
+            if (actualEl) actualEl.textContent = '¥' + actual.toLocaleString();
+            if (remainingEl) {
+                if (remaining < 0) {
+                    remainingEl.textContent = '+¥' + Math.abs(remaining).toLocaleString();
+                    remainingEl.classList.add('over-budget');
+                } else {
+                    remainingEl.textContent = '¥' + remaining.toLocaleString();
+                    remainingEl.classList.remove('over-budget');
+                }
+            }
+        }
+
+        function updateServiceProgressItem(name, sales, target) {
+            const statusEl = document.getElementById(`svcProgress${name}`);
+            const barEl = document.getElementById(`svcProgressBar${name}`);
+            if (!statusEl || !barEl) return;
+
+            const remaining = Math.max(0, target - sales);
+            const percentage = target > 0 ? Math.min(100, (sales / target) * 100) : 0;
+            const isAchieved = sales >= target && target > 0;
+
+            barEl.style.width = percentage + '%';
+            barEl.classList.toggle('achieved', isAchieved);
+
+            statusEl.classList.remove('achieved', 'close');
+            if (isAchieved) {
+                statusEl.textContent = '達成!';
+                statusEl.classList.add('achieved');
+            } else if (target > 0 && remaining <= 50000) {
+                statusEl.textContent = `あと ¥${remaining.toLocaleString()}`;
+                statusEl.classList.add('close');
+            } else if (target > 0) {
+                statusEl.textContent = `あと ¥${remaining.toLocaleString()}`;
+            } else {
+                statusEl.textContent = '-';
+            }
+        }
+
+        function updateServiceLegendStatus(elementId, rate) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.classList.remove('achieved', 'partial', 'pending');
+            if (rate >= 100) {
+                el.textContent = '達成!';
+                el.classList.add('achieved');
+            } else if (rate >= 80) {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('partial');
+            } else {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('pending');
+            }
+        }
+
+        // Initialize service charts (lazy)
+        function buildServiceDonutData(svcData) {
+            var totalSales = svcData.maint.sales + svcData.setup.sales;
+            var totalTarget = svcData.total.target;
+            var remaining = Math.max(0, totalTarget - totalSales);
+
+            if (remaining > 0) {
+                return {
+                    labels: ['メンテナンス', '設定', '未達分'],
+                    data: [svcData.maint.sales, svcData.setup.sales, remaining],
+                    colors: [brandColors.redBright, brandColors.blueBright, 'rgba(26, 24, 20, 0.06)']
+                };
+            } else {
+                return {
+                    labels: ['メンテナンス', '設定'],
+                    data: [svcData.maint.sales, svcData.setup.sales],
+                    colors: [brandColors.redBright, brandColors.blueBright]
+                };
+            }
+        }
+
+        function initServiceCharts() {
+            const svcData = getServiceData();
+
+            // Donut chart - メンテ/設定の達成率（100%未満は円が開く）
+            const donutCtx = document.getElementById('serviceDonutChart').getContext('2d');
+            var donutInitData = buildServiceDonutData(svcData);
+            serviceDonutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: donutInitData.labels,
+                    datasets: [{
+                        data: donutInitData.data,
+                        backgroundColor: donutInitData.colors,
+                        borderWidth: 0,
+                        cutout: '82%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: { duration: 600, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: function(tooltipItem) {
+                                return tooltipItem.label !== '未達分';
+                            },
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.label + ': ¥' + ctx.raw.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Sales breakdown bar chart
+            const breakdownCtx = document.getElementById('serviceBreakdownChart').getContext('2d');
+            serviceBreakdownChart = new Chart(breakdownCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['全体', 'メンテナンス', '設定'],
+                    datasets: [
+                        {
+                            label: '売上',
+                            data: [svcData.total.sales, svcData.maint.sales, svcData.setup.sales],
+                            backgroundColor: ['#5C4A3D', brandColors.redBright, brandColors.blueBright],
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barThickness: 40
+                        },
+                        {
+                            label: '目標',
+                            data: [svcData.total.target, svcData.maint.target, svcData.setup.target],
+                            backgroundColor: brandColors.grayLight,
+                            borderColor: brandColors.gray,
+                            borderWidth: 1,
+                            borderRadius: 6,
+                            borderSkipped: false,
+                            barThickness: 40
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { left: 5, right: 15 } },
+                    animation: { duration: 500, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { boxWidth: 12, padding: 16, font: { size: 10 } }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: v => '¥' + (v / 1000).toFixed(0) + 'k',
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+
+            // Achievement rate bar chart
+            const achieveCtx = document.getElementById('serviceAchievementChart').getContext('2d');
+            serviceAchievementChart = new Chart(achieveCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['全体', 'メンテナンス', '設定'],
+                    datasets: [{
+                        label: '達成率',
+                        data: [0, 0, 0],
+                        backgroundColor: ['#5C4A3D', brandColors.redBright, brandColors.blueBright],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { left: 5, right: 15 } },
+                    animation: { duration: 500, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            clip: true,
+                            annotations: {
+                                line100: {
+                                    type: 'line',
+                                    yMin: 100, yMax: 100,
+                                    borderColor: '#C15F3C',
+                                    borderWidth: 2,
+                                    borderDash: [4, 3],
+                                    drawTime: 'beforeDatasetsDraw',
+                                    label: { display: false }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                stepSize: 25,
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update service charts with current data
+        function updateServiceCharts() {
+            const data = getServiceData();
+
+            if (serviceDonutChart) {
+                var donutData = buildServiceDonutData(data);
+                serviceDonutChart.data.labels = donutData.labels;
+                serviceDonutChart.data.datasets[0].data = donutData.data;
+                serviceDonutChart.data.datasets[0].backgroundColor = donutData.colors;
+                serviceDonutChart.update();
+            }
+
+            if (serviceBreakdownChart) {
+                serviceBreakdownChart.data.datasets[0].data = [data.total.sales, data.maint.sales, data.setup.sales];
+                serviceBreakdownChart.data.datasets[1].data = [data.total.target, data.maint.target, data.setup.target];
+                serviceBreakdownChart.update();
+            }
+
+            if (serviceAchievementChart) {
+                const rates = [
+                    data.total.target > 0 ? (data.total.sales / data.total.target * 100) : 0,
+                    data.maint.target > 0 ? (data.maint.sales / data.maint.target * 100) : 0,
+                    data.setup.target > 0 ? (data.setup.sales / data.setup.target * 100) : 0
+                ];
+                const chartMax = calculateAchievementChartMax(rates);
+                serviceAchievementChart.options.scales.y.max = chartMax;
+                serviceAchievementChart.options.scales.y.ticks.stepSize = chartMax <= 100 ? 25 : 50;
+                serviceAchievementChart.data.datasets[0].data = rates.map(r => Math.round(r * 10) / 10);
+                serviceAchievementChart.update();
+            }
+
+            updateServiceProgress();
+        }
+
+        // saveServiceData は collectAllData() に統合済み（saveData 経由で一括保存）
+        function saveServiceData() { /* no-op: GAS版は saveData() で一括保存 */ }
+
+        // Load service data from parsed object
+        function loadServiceData(parsed) {
+            if (!parsed) return;
+            try {
+                if (parsed.budget) {
+                    document.getElementById('svcBudgetBase').value = parsed.budget.budgetBase ?? 0;
+                    document.getElementById('svcTargetMaint').value = parsed.budget.targetMaint ?? 0;
+                    document.getElementById('svcTargetSetup').value = parsed.budget.targetSetup ?? 0;
+                }
+                if (parsed.services) {
+                    ['serviceTable1', 'serviceTable2'].forEach(tableId => {
+                        document.querySelectorAll(`#${tableId} tbody tr:not(.subtotal-row)`).forEach(row => {
+                            const key = row.dataset.service;
+                            if (!key || !parsed.services[key]) return;
+                            const data = parsed.services[key];
+                            const custInput = row.querySelector('input[data-field="customers"]');
+                            const salesInput = row.querySelector('input[data-field="sales"]');
+                            if (custInput && custInput.type === 'number') custInput.value = data.customers || 0;
+                            if (salesInput && salesInput.type === 'number') salesInput.value = data.sales || 0;
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load service data:', e);
+            }
+        }
+
+        // ========== Hardware (ハード) functions ==========
+
+        function getHardwareBaselinePrice() {
+            const sel = document.getElementById('hwBaselineCamera');
+            if (!sel) return 155000;
+            const v = sel.value;
+            if (v === 'custom') {
+                return parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0;
+            }
+            return parseInt(v) || 155000;
+        }
+
+        function getHardwareData() {
+            const budgetCamera = parseInt(document.getElementById('hwBudgetCamera')?.value) || 0;
+            const budgetLens = parseInt(document.getElementById('hwBudgetLens')?.value) || 0;
+            const baselineCamera = document.getElementById('hwBaselineCamera')?.value || '155000';
+            const baselineCustomPrice = parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0;
+
+            // 新品のみ（中古は別部門）
+            let cameraSales = 0;
+            let lensSales = 0;
+            const items = {};
+
+            document.querySelectorAll('#hwCameraTable tbody tr').forEach(row => {
+                const key = row.dataset.hw;
+                if (!key) return;
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                cameraSales += s;
+                items[key] = { sales: s };
+            });
+
+            document.querySelectorAll('#hwLensTable tbody tr').forEach(row => {
+                const key = row.dataset.hw;
+                if (!key) return;
+                const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+                lensSales += s;
+                items[key] = { sales: s };
+            });
+
+            const totalSales = cameraSales + lensSales;
+            const totalBudget = budgetCamera + budgetLens;
+
+            return {
+                budget: { camera: budgetCamera, lens: budgetLens, total: totalBudget, baselineCamera, baselineCustomPrice },
+                camera: { sales: cameraSales, budget: budgetCamera },
+                lens: { sales: lensSales, budget: budgetLens },
+                total: { sales: totalSales, budget: totalBudget },
+                items: items
+            };
+        }
+
+        function calculateHardwareAll() {
+            const data = getHardwareData();
+
+            // テーブル内の達成率セル更新
+            const cameraRateEl = document.getElementById('hwCameraRate');
+            const lensRateEl = document.getElementById('hwLensRate');
+            if (cameraRateEl) {
+                cameraRateEl.textContent = data.camera.budget > 0
+                    ? (data.camera.sales / data.camera.budget * 100).toFixed(1) + '%'
+                    : '-';
+            }
+            if (lensRateEl) {
+                lensRateEl.textContent = data.lens.budget > 0
+                    ? (data.lens.sales / data.lens.budget * 100).toFixed(1) + '%'
+                    : '-';
+            }
+        }
+
+        function updateHardwareProgress() {
+            const data = getHardwareData();
+
+            // Progress bars（売上 = 実績）
+            updateHardwareProgressItem('All', data.total.sales, data.total.budget);
+            updateHardwareProgressItem('Camera', data.camera.sales, data.camera.budget);
+            updateHardwareProgressItem('Lens', data.lens.sales, data.lens.budget);
+
+            // Stat cards
+            const allRate = data.total.budget > 0 ? (data.total.sales / data.total.budget * 100).toFixed(1) : '0';
+            const cameraRate = data.camera.budget > 0 ? (data.camera.sales / data.camera.budget * 100).toFixed(1) : '0';
+            const lensRate = data.lens.budget > 0 ? (data.lens.sales / data.lens.budget * 100).toFixed(1) : '0';
+
+            const statAll = document.getElementById('hwStatAll');
+            const statCamera = document.getElementById('hwStatCamera');
+            const statLens = document.getElementById('hwStatLens');
+            if (statAll) statAll.textContent = allRate + '%';
+            if (statCamera) statCamera.textContent = cameraRate + '%';
+            if (statLens) statLens.textContent = lensRate + '%';
+
+            // Donut center
+            const donutValue = document.getElementById('hwDonutValue');
+            if (donutValue) donutValue.textContent = allRate + '%';
+
+            // Legend statuses
+            updateHardwareLegendStatus('hwLegendCamera', parseFloat(cameraRate));
+            updateHardwareLegendStatus('hwLegendLens', parseFloat(lensRate));
+
+            // Budget meter（売上 = 実績）
+            const budget = data.total.budget;
+            const actual = data.total.sales;
+            const remaining = budget - actual;
+
+            const budgetEl = document.getElementById('hwBudgetTotalDisp');
+            const actualEl = document.getElementById('hwActualTotalDisp');
+            const remainingEl = document.getElementById('hwRemainingTotalDisp');
+
+            if (budgetEl) budgetEl.textContent = '¥' + budget.toLocaleString();
+            if (actualEl) actualEl.textContent = '¥' + actual.toLocaleString();
+            if (remainingEl) {
+                if (remaining < 0) {
+                    remainingEl.textContent = '+¥' + Math.abs(remaining).toLocaleString();
+                    remainingEl.classList.add('over-budget');
+                } else {
+                    remainingEl.textContent = '¥' + remaining.toLocaleString();
+                    remainingEl.classList.remove('over-budget');
+                }
+            }
+
+            // Camera remaining tip
+            updateCameraRemainingTip(data);
+        }
+
+        function updateHardwareProgressItem(name, actual, budget) {
+            const statusEl = document.getElementById('hwProgress' + name);
+            const barEl = document.getElementById('hwProgressBar' + name);
+            if (!statusEl || !barEl) return;
+
+            const remaining = Math.max(0, budget - actual);
+            const percentage = budget > 0 ? Math.min(100, (actual / budget) * 100) : 0;
+            const isAchieved = actual >= budget && budget > 0;
+
+            barEl.style.width = percentage + '%';
+            barEl.classList.toggle('achieved', isAchieved);
+
+            statusEl.classList.remove('achieved', 'close');
+            if (isAchieved) {
+                statusEl.textContent = '達成!';
+                statusEl.classList.add('achieved');
+            } else if (budget > 0 && remaining <= 50000) {
+                statusEl.textContent = 'あと ¥' + remaining.toLocaleString();
+                statusEl.classList.add('close');
+            } else if (budget > 0) {
+                statusEl.textContent = 'あと ¥' + remaining.toLocaleString();
+            } else {
+                statusEl.textContent = '-';
+            }
+        }
+
+        function updateHardwareLegendStatus(elementId, rate) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.classList.remove('achieved', 'partial', 'pending');
+            if (rate >= 100) {
+                el.textContent = '達成!';
+                el.classList.add('achieved');
+            } else if (rate >= 80) {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('partial');
+            } else {
+                el.textContent = rate.toFixed(1) + '%';
+                el.classList.add('pending');
+            }
+        }
+
+        function updateCameraRemainingTip(data) {
+            const tipEl = document.getElementById('hwCameraRemainingTip');
+            const countEl = document.getElementById('hwRemainingCount');
+            const detailEl = document.getElementById('hwRemainingDetail');
+
+            const baselinePrice = getHardwareBaselinePrice();
+            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.sales);
+            const remainingCount = baselinePrice > 0 ? Math.floor(cameraRemaining / baselinePrice) : 0;
+
+            // 左パネルのTIP更新
+            if (tipEl && countEl && detailEl) {
+                if (baselinePrice <= 0 || data.camera.budget <= 0) {
+                    tipEl.style.display = 'none';
+                } else {
+                    tipEl.style.display = '';
+                    countEl.textContent = remainingCount;
+                    detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+                }
+            }
+
+            // 右パネルのカメラ換算カードを更新（常時表示）
+            const printCount = document.getElementById('hwPrintRemainingCount');
+            const printDetail = document.getElementById('hwPrintRemainingDetail');
+            const printBaseline = document.getElementById('hwPrintRemainingBaseline');
+            const hasData = baselinePrice > 0 && data.camera.budget > 0;
+
+            if (printCount) printCount.textContent = hasData ? remainingCount : '-';
+            if (printDetail) printDetail.textContent = hasData
+                ? '残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString()
+                : '予算未設定';
+            const sel = document.getElementById('hwBaselineCamera');
+            if (printBaseline && sel) {
+                printBaseline.textContent = hasData ? '基準: ' + sel.options[sel.selectedIndex]?.text : '';
+            }
+        }
+
+        // Hardware baseline camera dropdown handler
+        function setupHardwareBaselineHandler() {
+            const sel = document.getElementById('hwBaselineCamera');
+            const customWrap = document.getElementById('hwCustomPriceWrap');
+            if (!sel || !customWrap) return;
+
+            sel.addEventListener('change', function() {
+                customWrap.style.display = this.value === 'custom' ? '' : 'none';
+                calculateHardwareAll();
+                updateHardwareProgress();
+                if (hardwareChartsInitialized) updateHardwareCharts();
+                saveHardwareData();
+            });
+
+            const customInput = document.getElementById('hwBaselineCustomPrice');
+            if (customInput) {
+                customInput.addEventListener('input', function() {
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            }
+        }
+
+        // Hardware table input event delegation
+        function setupHardwareTableListeners() {
+            ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                table.addEventListener('input', function() {
+                    calculateHardwareAll();
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            });
+
+            // Budget inputs
+            ['hwBudgetCamera', 'hwBudgetLens'].forEach(id => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                el.addEventListener('input', function() {
+                    updateHardwareProgress();
+                    if (hardwareChartsInitialized) updateHardwareCharts();
+                    saveHardwareData();
+                });
+            });
+        }
+
+        // Build donut data for hardware
+        function buildHardwareDonutData(hwData) {
+            var totalSales = hwData.camera.sales + hwData.lens.sales;
+            var totalBudget = hwData.total.budget;
+            var remaining = Math.max(0, totalBudget - totalSales);
+
+            if (remaining > 0) {
+                return {
+                    labels: ['カメラ', 'レンズ', '未達分'],
+                    data: [hwData.camera.sales, hwData.lens.sales, remaining],
+                    colors: [brandColors.gold, brandColors.teal, 'rgba(26, 24, 20, 0.06)']
+                };
+            } else {
+                return {
+                    labels: ['カメラ', 'レンズ'],
+                    data: [hwData.camera.sales, hwData.lens.sales],
+                    colors: [brandColors.gold, brandColors.teal]
+                };
+            }
+        }
+
+        function initHardwareCharts() {
+            const hwData = getHardwareData();
+
+            // Donut chart
+            const donutCtx = document.getElementById('hardwareDonutChart').getContext('2d');
+            var donutInitData = buildHardwareDonutData(hwData);
+            hardwareDonutChart = new Chart(donutCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: donutInitData.labels,
+                    datasets: [{
+                        data: donutInitData.data,
+                        backgroundColor: donutInitData.colors,
+                        borderWidth: 0,
+                        cutout: '82%'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    animation: { duration: 600, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            filter: function(tooltipItem) {
+                                return tooltipItem.label !== '未達分';
+                            },
+                            callbacks: {
+                                label: function(ctx) {
+                                    return ctx.label + ': ¥' + ctx.raw.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Achievement bar chart
+            const achieveCtx = document.getElementById('hardwareAchievementChart').getContext('2d');
+            hardwareAchievementChart = new Chart(achieveCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['全体', 'カメラ', 'レンズ'],
+                    datasets: [{
+                        label: '達成率',
+                        data: [0, 0, 0],
+                        backgroundColor: [brandColors.bronze, brandColors.gold, brandColors.teal],
+                        borderRadius: 6,
+                        borderSkipped: false,
+                        barThickness: 40
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    layout: { padding: { left: 5, right: 15 } },
+                    animation: { duration: 500, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {
+                            clip: true,
+                            annotations: {
+                                line100: {
+                                    type: 'line',
+                                    yMin: 100, yMax: 100,
+                                    borderColor: '#C15F3C',
+                                    borderWidth: 2,
+                                    borderDash: [4, 3],
+                                    drawTime: 'beforeDatasetsDraw',
+                                    label: { display: false }
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            ticks: {
+                                callback: v => v + '%',
+                                stepSize: 25,
+                                font: { size: 10, family: "'IBM Plex Mono', monospace" }
+                            },
+                            grid: { color: 'rgba(26, 24, 20, 0.06)', drawBorder: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { font: { size: 10, weight: 500 } }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateHardwareCharts() {
+            const data = getHardwareData();
+
+            if (hardwareDonutChart) {
+                var donutData = buildHardwareDonutData(data);
+                hardwareDonutChart.data.labels = donutData.labels;
+                hardwareDonutChart.data.datasets[0].data = donutData.data;
+                hardwareDonutChart.data.datasets[0].backgroundColor = donutData.colors;
+                hardwareDonutChart.update();
+            }
+
+            if (hardwareAchievementChart) {
+                const rates = [
+                    data.total.budget > 0 ? (data.total.progress / data.total.budget * 100) : 0,
+                    data.camera.budget > 0 ? (data.camera.progress / data.camera.budget * 100) : 0,
+                    data.lens.budget > 0 ? (data.lens.progress / data.lens.budget * 100) : 0
+                ];
+                const chartMax = calculateAchievementChartMax(rates);
+                hardwareAchievementChart.options.scales.y.max = chartMax;
+                hardwareAchievementChart.options.scales.y.ticks.stepSize = chartMax <= 100 ? 25 : 50;
+                hardwareAchievementChart.data.datasets[0].data = rates.map(r => Math.round(r * 10) / 10);
+                hardwareAchievementChart.update();
+            }
+
+            updateHardwareProgress();
+        }
+
+        // saveHardwareData は collectAllData() に統合済み（saveData 経由で一括保存）
+        function saveHardwareData() { /* no-op: GAS版は saveData() で一括保存 */ }
+
+        // Load hardware data from parsed object
+        function loadHardwareData(parsed) {
+            if (!parsed) return;
+            try {
+                if (parsed.budget) {
+                    const bc = document.getElementById('hwBudgetCamera');
+                    const bl = document.getElementById('hwBudgetLens');
+                    const sel = document.getElementById('hwBaselineCamera');
+                    const customInput = document.getElementById('hwBaselineCustomPrice');
+                    const customWrap = document.getElementById('hwCustomPriceWrap');
+
+                    if (bc) bc.value = parsed.budget.camera ?? 0;
+                    if (bl) bl.value = parsed.budget.lens ?? 0;
+                    if (sel) sel.value = parsed.budget.baselineCamera ?? '155000';
+                    if (customInput) customInput.value = parsed.budget.baselineCustomPrice ?? 0;
+                    if (customWrap) customWrap.style.display = (parsed.budget.baselineCamera === 'custom') ? '' : 'none';
+                }
+                if (parsed.items) {
+                    ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
+                        document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
+                            const key = row.dataset.hw;
+                            if (!key || !parsed.items[key]) return;
+                            const d = parsed.items[key];
+                            const salesInput = row.querySelector('input[data-field="sales"]');
+                            if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
+                        });
+                    });
+                }
+            } catch (e) {
+                console.error('Failed to load hardware data:', e);
+            }
+        }
+
+        // loadViewState は applyLoadedData() 内で処理済み
+
+        // Show toast
+        function showToast(message, isWarning) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            if (isWarning) {
+                toast.style.background = 'var(--nk-accent-warm)';
+            } else {
+                toast.style.background = '';
+            }
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
+        // Initial mode
+        setMode('edit');
+    </script>

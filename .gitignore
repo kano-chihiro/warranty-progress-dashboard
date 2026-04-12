@@ -2,3 +2,8 @@
 .claude/
 node_modules/
 .wrangler/
+
+# Notion CLI / local secrets
+.env
+.env.local
+!.env.example

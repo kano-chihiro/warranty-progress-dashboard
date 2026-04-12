@@ -1,0 +1,634 @@
+<div class="mobile-app" id="mobileAppInner">
+    <!-- ===== Mobile Header ===== -->
+    <div class="m-header">
+        <div class="m-header-top">
+            <h1 class="m-title" id="m-title">保証 進捗</h1>
+            <span class="m-date" id="m-updateDate"></span>
+            <div class="m-mode-toggle">
+                <button id="m-editModeBtn" class="m-mode-btn active">編集</button>
+                <button id="m-previewModeBtn" class="m-mode-btn">プレビュー</button>
+            </div>
+        </div>
+        <div class="m-tabs">
+            <button id="m-warrantyTab" class="m-tab active">保証</button>
+            <button id="m-serviceTab" class="m-tab">サービス</button>
+            <button id="m-hardwareTab" class="m-tab">ハード</button>
+        </div>
+    </div>
+
+    <!-- ===== Mobile Content ===== -->
+    <div class="m-content" id="m-content">
+
+        <!-- ==================== WARRANTY VIEW ==================== -->
+        <div id="m-warrantyView" class="m-view active">
+            <div class="m-edit-content">
+                <!-- 5年間保証 & 安心サポート -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot green"></div>
+                        <span>5年間保証 & 安心サポート</span>
+                    </div>
+                    <div class="m-section-body">
+                        <!-- ハード販売（基準行） -->
+                        <div class="m-item m-item-base">
+                            <span class="m-item-name">ハード販売</span>
+                            <div class="m-item-input">
+                                <input type="number" id="m-hard-actual" inputmode="numeric" />
+                                <span class="m-unit">件</span>
+                            </div>
+                        </div>
+                        <!-- 5年間保証 -->
+                        <div class="m-item" data-color="green">
+                            <div class="m-item-top">
+                                <span class="m-item-name">5年間保証</span>
+                                <span class="m-item-badge" id="m-warranty-badge">-</span>
+                            </div>
+                            <div class="m-item-inputs">
+                                <div class="m-input-pair">
+                                    <label>実績</label>
+                                    <input type="number" id="m-warranty-actual" inputmode="numeric" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                                <div class="m-input-pair">
+                                    <label>目標</label>
+                                    <input type="number" id="m-warranty-target" inputmode="numeric" class="m-locked" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                            </div>
+                            <div class="m-item-rates">
+                                <span>添付率 <strong id="m-warranty-actualRate">-</strong></span>
+                                <span class="m-rate-editable">目標 <input type="number" id="m-warranty-targetRate" inputmode="decimal" class="m-rate-input" min="0" max="100" step="0.1" placeholder="0" /><span class="m-rate-suffix">%</span></span>
+                            </div>
+                        </div>
+                        <!-- 安心サポート -->
+                        <div class="m-item" data-color="red">
+                            <div class="m-item-top">
+                                <span class="m-item-name">安心サポート</span>
+                                <span class="m-item-badge" id="m-support-badge">-</span>
+                            </div>
+                            <div class="m-item-inputs">
+                                <div class="m-input-pair">
+                                    <label>実績</label>
+                                    <input type="number" id="m-support-actual" inputmode="numeric" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                                <div class="m-input-pair">
+                                    <label>目標</label>
+                                    <input type="number" id="m-support-target" inputmode="numeric" class="m-locked" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                            </div>
+                            <div class="m-item-rates">
+                                <span>添付率 <strong id="m-support-actualRate">-</strong></span>
+                                <span class="m-rate-editable">目標 <input type="number" id="m-support-targetRate" inputmode="decimal" class="m-rate-input" min="0" max="100" step="0.1" placeholder="0" /><span class="m-rate-suffix">%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 予算設定 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot green"></div>
+                        <span>5年間保証 予算設定</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-budget-row">
+                            <span class="m-budget-label">予算金額</span>
+                            <input type="number" id="m-warrantyBudget" inputmode="numeric" />
+                            <span class="m-currency">円</span>
+                        </div>
+                        <div class="m-budget-row">
+                            <span class="m-budget-label">実績金額</span>
+                            <input type="number" id="m-warrantyActualAmount" inputmode="numeric" />
+                            <span class="m-currency">円</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中古まるごとサポート -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot blue"></div>
+                        <span>中古まるごとサポート</span>
+                    </div>
+                    <div class="m-section-body">
+                        <!-- 中古販売（基準行） -->
+                        <div class="m-item m-item-base">
+                            <span class="m-item-name">中古販売</span>
+                            <div class="m-item-input">
+                                <input type="number" id="m-used-actual" inputmode="numeric" />
+                                <span class="m-unit">件</span>
+                            </div>
+                        </div>
+                        <!-- 中古まるサポ -->
+                        <div class="m-item" data-color="blue">
+                            <div class="m-item-top">
+                                <span class="m-item-name">中古まるサポ</span>
+                                <span class="m-item-badge" id="m-usedSupport-badge">-</span>
+                            </div>
+                            <div class="m-item-inputs">
+                                <div class="m-input-pair">
+                                    <label>実績</label>
+                                    <input type="number" id="m-usedSupport-actual" inputmode="numeric" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                                <div class="m-input-pair">
+                                    <label>目標</label>
+                                    <input type="number" id="m-usedSupport-target" inputmode="numeric" class="m-locked" />
+                                    <span class="m-unit">件</span>
+                                </div>
+                            </div>
+                            <div class="m-item-rates">
+                                <span>添付率 <strong id="m-usedSupport-actualRate">-</strong></span>
+                                <span class="m-rate-editable">目標 <input type="number" id="m-usedSupport-targetRate" inputmode="decimal" class="m-rate-input" min="0" max="100" step="0.1" placeholder="0" /><span class="m-rate-suffix">%</span></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 目標達成への道 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot" style="background: linear-gradient(180deg, var(--color-green), var(--color-blue));"></div>
+                        <span>目標達成への道</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">5年間保証</span>
+                                <span class="m-progress-status" id="m-progressWarranty">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill green" id="m-progressBarWarranty" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">安心サポート</span>
+                                <span class="m-progress-status" id="m-progressSupport">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill red" id="m-progressBarSupport" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">中古まるサポ</span>
+                                <span class="m-progress-status" id="m-progressUsed">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill blue" id="m-progressBarUsed" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <!-- 予算達成 -->
+                        <div class="m-budget-progress">
+                            <div class="m-budget-progress-header">
+                                <span class="m-budget-progress-title">予算達成</span>
+                                <span class="m-budget-amounts" id="m-budgetAmounts">¥0 / ¥0</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill green" id="m-budgetBar" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- グラフ表示トグル -->
+                <div class="m-chart-toggle">
+                    <button class="m-chart-toggle-btn" id="m-warrantyChartToggle">&#9660; グラフを表示</button>
+                </div>
+                <div class="m-chart-section" id="m-warrantyChartSection">
+                    <div class="m-donut-container">
+                        <div class="m-donut-visual">
+                            <canvas id="m-warrantyDonut"></canvas>
+                            <div class="m-donut-center">
+                                <div class="m-donut-value" id="m-donutValue">0/3</div>
+                                <div class="m-donut-label">達成</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="m-stats-grid">
+                        <div class="m-stat-card">
+                            <div class="m-stat-value" id="m-statWarrantyRate" style="color: var(--color-green);">-</div>
+                            <div class="m-stat-label">5年間保証<br>添付率</div>
+                        </div>
+                        <div class="m-stat-card">
+                            <div class="m-stat-value" id="m-statSupportRate" style="color: var(--color-red);">-</div>
+                            <div class="m-stat-label">安心サポ<br>添付率</div>
+                        </div>
+                        <div class="m-stat-card">
+                            <div class="m-stat-value" id="m-statUsedRate" style="color: var(--color-blue);">-</div>
+                            <div class="m-stat-label">中古サポ<br>添付率</div>
+                        </div>
+                    </div>
+                    <div class="m-chart-card">
+                        <div class="m-chart-title">目標件数 達成率</div>
+                        <div class="m-chart-wrapper"><canvas id="m-achievementChart"></canvas></div>
+                    </div>
+                    <div class="m-chart-card">
+                        <div class="m-chart-title">添付比率 実績 vs 目標</div>
+                        <div class="m-chart-wrapper"><canvas id="m-comparisonChart"></canvas></div>
+                    </div>
+                </div>
+            </div><!-- /m-edit-content -->
+
+            <!-- WARRANTY PREVIEW -->
+            <div class="m-preview-content">
+                <div class="m-donut-container">
+                    <div class="m-donut-visual">
+                        <canvas id="m-warrantyDonutPreview"></canvas>
+                        <div class="m-donut-center">
+                            <div class="m-donut-value" id="m-donutValuePreview">0/3</div>
+                            <div class="m-donut-label">達成</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-preview-stats">
+                    <div class="m-preview-stat">
+                        <div class="m-preview-stat-value" id="m-pvWarrantyRate" style="color: var(--color-green);">-</div>
+                        <div class="m-preview-stat-label">5年間保証<br>添付率</div>
+                    </div>
+                    <div class="m-preview-stat">
+                        <div class="m-preview-stat-value" id="m-pvSupportRate" style="color: var(--color-red);">-</div>
+                        <div class="m-preview-stat-label">安心サポ<br>添付率</div>
+                    </div>
+                    <div class="m-preview-stat">
+                        <div class="m-preview-stat-value" id="m-pvUsedRate" style="color: var(--color-blue);">-</div>
+                        <div class="m-preview-stat-label">中古サポ<br>添付率</div>
+                    </div>
+                </div>
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot" style="background: linear-gradient(180deg, var(--color-green), var(--color-blue));"></div>
+                        <span>目標達成への道</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">5年間保証</span>
+                                <span class="m-progress-status" id="m-pvProgressWarranty">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill green" id="m-pvProgressBarWarranty" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">安心サポート</span>
+                                <span class="m-progress-status" id="m-pvProgressSupport">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill red" id="m-pvProgressBarSupport" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">中古まるサポ</span>
+                                <span class="m-progress-status" id="m-pvProgressUsed">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill blue" id="m-pvProgressBarUsed" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-chart-card">
+                    <div class="m-chart-title">目標件数 達成率</div>
+                    <div class="m-chart-wrapper"><canvas id="m-achievementChartPreview"></canvas></div>
+                </div>
+            </div><!-- /m-preview-content -->
+        </div><!-- /m-warrantyView -->
+
+        <!-- ==================== SERVICE VIEW ==================== -->
+        <div id="m-serviceView" class="m-view">
+            <div class="m-edit-content">
+                <!-- 目標設定 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot warm"></div>
+                        <span>目標設定</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-budget-row">
+                            <span class="m-budget-label">全体予算</span>
+                            <input type="number" id="m-svcBudgetBase" inputmode="numeric" />
+                            <span class="m-currency">円</span>
+                        </div>
+                        <div class="m-budget-row">
+                            <span class="m-budget-label">メンテ目標</span>
+                            <input type="number" id="m-svcTargetMaint" inputmode="numeric" />
+                            <span class="m-currency">円</span>
+                        </div>
+                        <div class="m-budget-row">
+                            <span class="m-budget-label">設定目標</span>
+                            <input type="number" id="m-svcTargetSetup" inputmode="numeric" />
+                            <span class="m-currency">円</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- メンテナンスサービス -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot warm"></div>
+                        <span>メンテナンス</span>
+                    </div>
+                    <div class="m-section-body" style="padding: 0;">
+                        <table class="m-service-table" id="m-serviceTable1">
+                            <thead>
+                                <tr><th>サービス</th><th>件数</th><th>売上</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr data-service="cameraGlass"><td class="m-svc-name">カメラガラスコート</td><td><input type="number" id="m-cameraGlass-customers" inputmode="numeric" /></td><td><input type="number" id="m-cameraGlass-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="smartGlass"><td class="m-svc-name">スマホガラスコート</td><td><input type="number" id="m-smartGlass-customers" inputmode="numeric" /></td><td><input type="number" id="m-smartGlass-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="quickMaint"><td class="m-svc-name">クイックメンテ(計)</td><td><input type="number" id="m-quickMaint-customers" inputmode="numeric" /></td><td><input type="number" id="m-quickMaint-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="quickMaint_contact"><td class="m-sub-name">接点コーティング</td><td><input type="number" id="m-quickMaint_contact-customers" inputmode="numeric" /></td><td><input type="number" id="m-quickMaint_contact-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="quickMaint_other"><td class="m-sub-name">外観清掃・他</td><td><input type="number" id="m-quickMaint_other-customers" inputmode="numeric" /></td><td><input type="number" id="m-quickMaint_other-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="cameraNano"><td class="m-svc-name">カメラナノコート</td><td><input type="number" id="m-cameraNano-customers" inputmode="numeric" /></td><td><input type="number" id="m-cameraNano-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="sensorClean"><td class="m-svc-name">センサークリーニング</td><td><input type="number" id="m-sensorClean-customers" inputmode="numeric" /></td><td><input type="number" id="m-sensorClean-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="smartClean"><td class="m-svc-name">スマホクリーニング</td><td><input type="number" id="m-smartClean-customers" inputmode="numeric" /></td><td><input type="number" id="m-smartClean-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="bulkFilm"><td class="m-svc-name">バルクフィルム</td><td><input type="number" id="m-bulkFilm-customers" inputmode="numeric" /></td><td><input type="number" id="m-bulkFilm-sales" inputmode="numeric" /></td></tr>
+                                <tr class="m-subtotal"><td class="m-svc-name">メンテ 小計</td><td id="m-maintSubtotalCustomers">0</td><td id="m-maintSubtotalSales">¥0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 設定サービス -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot bright"></div>
+                        <span>設定サービス</span>
+                    </div>
+                    <div class="m-section-body" style="padding: 0;">
+                        <table class="m-service-table" id="m-serviceTable2">
+                            <thead>
+                                <tr><th>サービス</th><th>件数</th><th>売上</th></tr>
+                            </thead>
+                            <tbody>
+                                <tr data-service="cameraSetup"><td class="m-svc-name">カメラ初期設定</td><td><input type="number" id="m-cameraSetup-customers" inputmode="numeric" /></td><td><input type="number" id="m-cameraSetup-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="smartSupport"><td class="m-svc-name">スマホ設定サポート</td><td><input type="number" id="m-smartSupport-customers" inputmode="numeric" /></td><td><input type="number" id="m-smartSupport-sales" inputmode="numeric" /></td></tr>
+                                <tr data-service="smartSetupA"><td class="m-svc-name">スマホ初期設定A</td><td><input type="number" id="m-smartSetupA-customers" inputmode="numeric" /></td><td><input type="number" id="m-smartSetupA-sales" inputmode="numeric" /></td></tr>
+                                <tr class="m-subtotal"><td class="m-svc-name">設定 小計</td><td id="m-setupSubtotalCustomers">0</td><td id="m-setupSubtotalSales">¥0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 売上目標への道 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot" style="background: linear-gradient(180deg, var(--nk-accent-warm-bright), var(--nk-accent-bright));"></div>
+                        <span>売上目標への道</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">全体</span>
+                                <span class="m-progress-status" id="m-svcProgressAll">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill warm-dark" id="m-svcProgressBarAll" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">メンテナンス</span>
+                                <span class="m-progress-status" id="m-svcProgressMaint">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill warm" id="m-svcProgressBarMaint" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                        <div class="m-progress-item">
+                            <div class="m-progress-label">
+                                <span class="m-progress-name">設定</span>
+                                <span class="m-progress-status" id="m-svcProgressSetup">-</span>
+                            </div>
+                            <div class="m-progress-bar-bg">
+                                <div class="m-progress-bar-fill bright" id="m-svcProgressBarSetup" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- グラフトグル -->
+                <div class="m-chart-toggle">
+                    <button class="m-chart-toggle-btn" id="m-serviceChartToggle">&#9660; グラフを表示</button>
+                </div>
+                <div class="m-chart-section" id="m-serviceChartSection">
+                    <div class="m-donut-container">
+                        <div class="m-donut-visual">
+                            <canvas id="m-serviceDonut"></canvas>
+                            <div class="m-donut-center">
+                                <div class="m-donut-value" id="m-svcDonutValue">0%</div>
+                                <div class="m-donut-label">全体達成率</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="m-budget-meter" id="m-serviceBudgetMeter">
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">予算</div><div class="m-budget-meter-value" id="m-svcBudgetTotal">¥0</div></div>
+                        <div class="m-budget-meter-divider"></div>
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">実績</div><div class="m-budget-meter-value" id="m-svcActualTotal">¥0</div></div>
+                        <div class="m-budget-meter-divider"></div>
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">残額</div><div class="m-budget-meter-value" id="m-svcRemainingTotal">¥0</div></div>
+                    </div>
+                    <div class="m-chart-card">
+                        <div class="m-chart-title">売上内訳</div>
+                        <div class="m-chart-wrapper"><canvas id="m-serviceBreakdownChart"></canvas></div>
+                    </div>
+                </div>
+            </div><!-- /m-edit-content -->
+
+            <!-- SERVICE PREVIEW -->
+            <div class="m-preview-content">
+                <div class="m-donut-container">
+                    <div class="m-donut-visual">
+                        <canvas id="m-serviceDonutPreview"></canvas>
+                        <div class="m-donut-center">
+                            <div class="m-donut-value" id="m-svcDonutValuePreview">0%</div>
+                            <div class="m-donut-label">全体達成率</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-budget-meter">
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">予算</div><div class="m-budget-meter-value" id="m-pvSvcBudget">¥0</div></div>
+                    <div class="m-budget-meter-divider"></div>
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">実績</div><div class="m-budget-meter-value" id="m-pvSvcActual">¥0</div></div>
+                    <div class="m-budget-meter-divider"></div>
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">残額</div><div class="m-budget-meter-value" id="m-pvSvcRemaining">¥0</div></div>
+                </div>
+                <div class="m-preview-stats">
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvSvcStatAll" style="color: #5C4A3D;">0%</div><div class="m-preview-stat-label">全体</div></div>
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvSvcStatMaint" style="color: var(--nk-accent-warm-bright);">0%</div><div class="m-preview-stat-label">メンテ</div></div>
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvSvcStatSetup" style="color: var(--nk-accent-bright);">0%</div><div class="m-preview-stat-label">設定</div></div>
+                </div>
+                <div class="m-section">
+                    <div class="m-section-body">
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">全体</span><span class="m-progress-status" id="m-pvSvcProgressAll">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill warm-dark" id="m-pvSvcBarAll" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">メンテ</span><span class="m-progress-status" id="m-pvSvcProgressMaint">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill warm" id="m-pvSvcBarMaint" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">設定</span><span class="m-progress-status" id="m-pvSvcProgressSetup">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill bright" id="m-pvSvcBarSetup" style="width:0%;"></div></div></div>
+                    </div>
+                </div>
+            </div><!-- /m-preview-content -->
+        </div><!-- /m-serviceView -->
+
+        <!-- ==================== HARDWARE VIEW ==================== -->
+        <div id="m-hardwareView" class="m-view">
+            <div class="m-edit-content">
+                <!-- 目標設定 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot bronze"></div>
+                        <span>ハード部門 目標設定</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-hw-budget-grid">
+                            <div class="m-hw-budget-item">
+                                <label>カメラ予算</label>
+                                <input type="number" id="m-hwBudgetCamera" inputmode="numeric" />
+                            </div>
+                            <div class="m-hw-budget-item">
+                                <label>レンズ予算</label>
+                                <input type="number" id="m-hwBudgetLens" inputmode="numeric" />
+                            </div>
+                            <div class="m-hw-budget-item m-hw-select-full">
+                                <label>基準カメラ</label>
+                                <select id="m-hwBaselineCamera">
+                                    <option value="155000">Canon R10 Kit (¥155,000)</option>
+                                    <option value="170000">Nikon Z50II Kit (¥170,000)</option>
+                                    <option value="custom">カスタム金額</option>
+                                </select>
+                            </div>
+                            <div class="m-hw-budget-item" id="m-hwCustomPriceWrap" style="display:none;">
+                                <label>カスタム単価</label>
+                                <input type="number" id="m-hwBaselineCustomPrice" inputmode="numeric" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- カメラ売上 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot gold"></div>
+                        <span>カメラ売上</span>
+                    </div>
+                    <div class="m-section-body" style="padding: 0;">
+                        <table class="m-hw-table" id="m-hwCameraTable">
+                            <thead><tr><th>項目</th><th>売上金額</th><th>進捗金額</th></tr></thead>
+                            <tbody>
+                                <tr data-hw="cameraNew"><td class="label-cell">新品カメラ</td><td><input type="number" id="m-cameraNew-sales" inputmode="numeric" /></td><td><input type="number" id="m-cameraNew-progress" inputmode="numeric" /></td></tr>
+                                <tr data-hw="cameraUsed"><td class="label-cell">中古カメラ</td><td><input type="number" id="m-cameraUsed-sales" inputmode="numeric" /></td><td><input type="number" id="m-cameraUsed-progress" inputmode="numeric" /></td></tr>
+                                <tr class="m-subtotal"><td class="label-cell">カメラ合計</td><td id="m-hwCameraSalesTotal">¥0</td><td id="m-hwCameraProgressTotal">¥0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- レンズ売上 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot teal"></div>
+                        <span>レンズ売上</span>
+                    </div>
+                    <div class="m-section-body" style="padding: 0;">
+                        <table class="m-hw-table" id="m-hwLensTable">
+                            <thead><tr><th>項目</th><th>売上金額</th><th>進捗金額</th></tr></thead>
+                            <tbody>
+                                <tr data-hw="lensNew"><td class="label-cell">新品レンズ</td><td><input type="number" id="m-lensNew-sales" inputmode="numeric" /></td><td><input type="number" id="m-lensNew-progress" inputmode="numeric" /></td></tr>
+                                <tr data-hw="lensUsed"><td class="label-cell">中古レンズ</td><td><input type="number" id="m-lensUsed-sales" inputmode="numeric" /></td><td><input type="number" id="m-lensUsed-progress" inputmode="numeric" /></td></tr>
+                                <tr class="m-subtotal"><td class="label-cell">レンズ合計</td><td id="m-hwLensSalesTotal">¥0</td><td id="m-hwLensProgressTotal">¥0</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 達成状況 -->
+                <div class="m-section">
+                    <div class="m-section-header">
+                        <div class="m-section-dot bronze"></div>
+                        <span>達成状況</span>
+                    </div>
+                    <div class="m-section-body">
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">全体</span><span class="m-progress-status" id="m-hwProgressAll">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill bronze" id="m-hwProgressBarAll" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">カメラ</span><span class="m-progress-status" id="m-hwProgressCamera">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill gold" id="m-hwProgressBarCamera" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">レンズ</span><span class="m-progress-status" id="m-hwProgressLens">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill teal" id="m-hwProgressBarLens" style="width:0%;"></div></div></div>
+                        <div class="m-camera-tip" id="m-hwCameraRemainingTip">
+                            <span class="m-camera-tip-icon">&#128247;</span>
+                            <div class="m-camera-tip-text">カメラ予算残 = あと<strong id="m-hwRemainingCount">0</strong>台分</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- グラフトグル -->
+                <div class="m-chart-toggle">
+                    <button class="m-chart-toggle-btn" id="m-hardwareChartToggle">&#9660; グラフを表示</button>
+                </div>
+                <div class="m-chart-section" id="m-hardwareChartSection">
+                    <div class="m-donut-container">
+                        <div class="m-donut-visual">
+                            <canvas id="m-hardwareDonut"></canvas>
+                            <div class="m-donut-center">
+                                <div class="m-donut-value" id="m-hwDonutValue">0%</div>
+                                <div class="m-donut-label">全体達成率</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="m-budget-meter">
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">予算</div><div class="m-budget-meter-value" id="m-hwBudgetTotalDisp">¥0</div></div>
+                        <div class="m-budget-meter-divider"></div>
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">実績</div><div class="m-budget-meter-value" id="m-hwActualTotalDisp">¥0</div></div>
+                        <div class="m-budget-meter-divider"></div>
+                        <div class="m-budget-meter-item"><div class="m-budget-meter-label">残額</div><div class="m-budget-meter-value" id="m-hwRemainingTotalDisp2">¥0</div></div>
+                    </div>
+                    <div class="m-stats-grid">
+                        <div class="m-stat-card"><div class="m-stat-value" id="m-hwStatAll" style="color:#8B7355;">0%</div><div class="m-stat-label">全体</div></div>
+                        <div class="m-stat-card"><div class="m-stat-value" id="m-hwStatCamera" style="color:#C4A35A;">0%</div><div class="m-stat-label">カメラ</div></div>
+                        <div class="m-stat-card"><div class="m-stat-value" id="m-hwStatLens" style="color:#5A7C8A;">0%</div><div class="m-stat-label">レンズ</div></div>
+                    </div>
+                </div>
+            </div><!-- /m-edit-content -->
+
+            <!-- HARDWARE PREVIEW -->
+            <div class="m-preview-content">
+                <div class="m-donut-container">
+                    <div class="m-donut-visual">
+                        <canvas id="m-hardwareDonutPreview"></canvas>
+                        <div class="m-donut-center">
+                            <div class="m-donut-value" id="m-hwDonutValuePreview">0%</div>
+                            <div class="m-donut-label">全体達成率</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="m-budget-meter">
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">予算</div><div class="m-budget-meter-value" id="m-pvHwBudget">¥0</div></div>
+                    <div class="m-budget-meter-divider"></div>
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">実績</div><div class="m-budget-meter-value" id="m-pvHwActual">¥0</div></div>
+                    <div class="m-budget-meter-divider"></div>
+                    <div class="m-budget-meter-item"><div class="m-budget-meter-label">残額</div><div class="m-budget-meter-value" id="m-pvHwRemaining">¥0</div></div>
+                </div>
+                <div class="m-preview-stats">
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvHwStatAll" style="color:#8B7355;">0%</div><div class="m-preview-stat-label">全体</div></div>
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvHwStatCamera" style="color:#C4A35A;">0%</div><div class="m-preview-stat-label">カメラ</div></div>
+                    <div class="m-preview-stat"><div class="m-preview-stat-value" id="m-pvHwStatLens" style="color:#5A7C8A;">0%</div><div class="m-preview-stat-label">レンズ</div></div>
+                </div>
+                <div class="m-section">
+                    <div class="m-section-body">
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">全体</span><span class="m-progress-status" id="m-pvHwProgressAll">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill bronze" id="m-pvHwBarAll" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">カメラ</span><span class="m-progress-status" id="m-pvHwProgressCamera">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill gold" id="m-pvHwBarCamera" style="width:0%;"></div></div></div>
+                        <div class="m-progress-item"><div class="m-progress-label"><span class="m-progress-name">レンズ</span><span class="m-progress-status" id="m-pvHwProgressLens">-</span></div><div class="m-progress-bar-bg"><div class="m-progress-bar-fill teal" id="m-pvHwBarLens" style="width:0%;"></div></div></div>
+                        <div class="m-camera-tip">
+                            <span class="m-camera-tip-icon">&#128247;</span>
+                            <div class="m-camera-tip-text">カメラ予算残 = あと<strong id="m-pvHwRemainingCount">0</strong>台分</div>
+                        </div>
+                    </div>
+                </div>
+            </div><!-- /m-preview-content -->
+        </div><!-- /m-hardwareView -->
+    </div><!-- /m-content -->
+
+    <!-- Floating Save Button -->
+    <button class="m-fab-save" id="m-saveBtn">保存</button>
+</div><!-- /mobile-app -->

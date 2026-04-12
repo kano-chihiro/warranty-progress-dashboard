@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;500&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+JP:wght@400;500;600&family=Noto+Serif+JP:wght@400;500&display=swap" rel="stylesheet">
-    <style>
+        <style>
         * {
             margin: 0;
             padding: 0;
@@ -113,7 +113,7 @@
         /* Header */
         .header {
             background: var(--nk-bg-white);
-            padding: 16px 28px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -128,10 +128,11 @@
 
         .header-title h1 {
             font-family: var(--font-serif);
-            font-size: 1.25rem;
+            font-size: 1.15rem;
             font-weight: 500;
             letter-spacing: -0.01em;
             color: var(--nk-text);
+            white-space: nowrap;
         }
 
         .update-date {
@@ -150,13 +151,13 @@
         }
 
         .header-actions button {
-            padding: 6px 14px;
+            padding: 5px 12px;
             border: 1px solid var(--border-color);
             background: var(--bg-primary);
             color: var(--text-secondary);
             border-radius: var(--radius-sm);
             cursor: pointer;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: 500;
             transition: all 0.2s ease;
         }
@@ -185,29 +186,33 @@
             background: var(--color-green-light) !important;
         }
 
-        /* Main Content - 7:3 ratio */
+        /* Main Content */
         .main-content {
             display: grid;
-            grid-template-columns: 55fr 45fr;
+            grid-template-columns: 48fr 52fr;
             gap: 0;
+            overflow: hidden;
         }
 
         /* Left Panel - Tables */
         .left-panel {
-            padding: 20px 24px;
+            padding: 16px 20px;
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
+            min-width: 0;
         }
 
         /* Right Panel - Charts */
         .right-panel {
-            padding: 24px;
+            padding: 20px;
             background: var(--nk-bg-secondary);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
+            min-width: 0;
+            overflow-x: hidden;
         }
 
         /* Section Card */
@@ -224,7 +229,7 @@
         }
 
         .section-header {
-            padding: 10px 16px;
+            padding: 8px 14px;
             background: var(--nk-bg-tertiary);
             border-bottom: 1px solid var(--nk-border-light);
             display: flex;
@@ -1411,6 +1416,18 @@
             display: none;
         }
 
+        .preview-mode .footer-actions {
+            position: relative;
+            z-index: 10;
+        }
+
+        .preview-mode .footer-actions .btn-secondary {
+            padding: 12px 28px;
+            min-height: 44px;
+            min-width: 90px;
+            font-size: 14px;
+        }
+
         /* Preview Mode - Graph-centric Layout */
         .preview-mode .main-content {
             display: block;
@@ -1434,13 +1451,17 @@
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: auto auto auto auto;
             gap: 22px;
-            padding: 28px 32px;
+            padding: 24px;
             background: var(--nk-bg);
+            min-width: 0;
+            overflow-x: hidden;
+            box-sizing: border-box;
         }
 
         .preview-mode .donut-chart-container {
             grid-column: 1 / -1;
-            padding: 24px 32px;
+            padding: 20px 24px;
+            box-sizing: border-box;
         }
 
         .preview-mode .donut-chart-visual {
@@ -1489,6 +1510,75 @@
 
         .preview-mode .progress-bar {
             height: 12px;
+        }
+
+        /* Hardware Camera Remaining Card - 常時表示 */
+        .hw-print-remaining {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: var(--nk-bg-white);
+            border: 1px solid var(--nk-border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px 20px;
+            text-align: center;
+        }
+
+        .hw-print-remaining-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .hw-print-remaining-title {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #8B7355;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        .hw-print-remaining-count {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 3.2rem;
+            font-weight: 500;
+            color: #C4A35A;
+            line-height: 1;
+        }
+
+        .hw-print-remaining-unit {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #8B7355;
+            margin-top: 4px;
+        }
+
+        .hw-print-remaining-detail {
+            font-size: 0.7rem;
+            color: var(--nk-text-secondary);
+            margin-top: 10px;
+            font-family: var(--font-mono);
+        }
+
+        .hw-print-remaining-baseline {
+            font-size: 0.65rem;
+            color: var(--nk-text-tertiary);
+            margin-top: 4px;
+        }
+
+        /* Preview mode: camera remaining + chart を3行目に横並び（常時表示） */
+        .preview-mode #hardwareCharts .hw-print-remaining {
+            grid-column: 1;
+            grid-row: 3;
+            min-height: 260px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .preview-mode #hardwareCharts .chart-card {
+            grid-column: 2;
+            grid-row: 3;
         }
 
         /* Toast */
@@ -1947,7 +2037,7 @@
             .preview-mode #serviceCharts .service-stat-value {
                 font-size: 3.4rem !important;
                 line-height: 1 !important;
-                font-weight: 600 !important;
+                font-weight: 500 !important;
                 white-space: nowrap !important;
                 font-family: var(--font-sans) !important;
             }
@@ -1987,6 +2077,226 @@
             #serviceView .service-progress-item,
             .preview-mode #serviceView .service-progress-item {
                 display: none !important;
+            }
+
+            /* ===== HARDWARE CHARTS PRINT TUNING ===== */
+            #hardwareCharts .donut-chart-container,
+            .preview-mode #hardwareCharts .donut-chart-container {
+                display: flex !important;
+                width: 100% !important;
+                height: 190px !important;
+                padding: 16px 22px !important;
+                margin-right: 0 !important;
+                margin-bottom: 10px !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 24px !important;
+            }
+
+            #hardwareCharts .service-budget-meter,
+            .preview-mode #hardwareCharts .service-budget-meter {
+                display: flex !important;
+                min-width: 140px !important;
+                padding: 8px 18px !important;
+                gap: 3px !important;
+            }
+
+            #hardwareCharts .service-budget-meter-label,
+            .preview-mode #hardwareCharts .service-budget-meter-label {
+                font-size: 0.85rem !important;
+                letter-spacing: 0.06em !important;
+            }
+
+            #hardwareCharts .service-budget-meter-value,
+            .preview-mode #hardwareCharts .service-budget-meter-value {
+                font-size: 1.35rem !important;
+                font-weight: 600 !important;
+            }
+
+            #hardwareCharts .service-budget-meter-divider,
+            .preview-mode #hardwareCharts .service-budget-meter-divider {
+                width: 55px !important;
+                margin: 1px 0 !important;
+            }
+
+            #hardwareCharts .donut-chart-visual,
+            .preview-mode #hardwareCharts .donut-chart-visual {
+                width: 135px !important;
+                height: 135px !important;
+                min-width: 135px !important;
+                min-height: 135px !important;
+            }
+
+            #hardwareCharts .donut-chart-visual canvas,
+            .preview-mode #hardwareCharts .donut-chart-visual canvas {
+                width: 135px !important;
+                height: 135px !important;
+            }
+
+            #hardwareCharts .donut-chart-center,
+            .preview-mode #hardwareCharts .donut-chart-center {
+                width: 85px !important;
+                height: 52px !important;
+            }
+
+            #hardwareCharts .donut-chart-value,
+            .preview-mode #hardwareCharts .donut-chart-value {
+                font-size: 1.75rem !important;
+            }
+
+            #hardwareCharts .donut-chart-label,
+            .preview-mode #hardwareCharts .donut-chart-label {
+                font-size: 0.72rem !important;
+            }
+
+            #hardwareCharts .donut-chart-legend,
+            .preview-mode #hardwareCharts .donut-chart-legend {
+                flex: 0 0 auto !important;
+                min-width: auto !important;
+                max-width: 320px !important;
+                gap: 10px !important;
+            }
+
+            #hardwareCharts .donut-legend-text,
+            .preview-mode #hardwareCharts .donut-legend-text {
+                font-size: 0.95rem !important;
+                flex: 0 0 auto !important;
+            }
+
+            #hardwareCharts .donut-legend-status,
+            .preview-mode #hardwareCharts .donut-legend-status {
+                font-size: 0.72rem !important;
+            }
+
+            #hardwareCharts .donut-legend-color,
+            .preview-mode #hardwareCharts .donut-legend-color {
+                width: 13px !important;
+                height: 13px !important;
+                min-width: 13px !important;
+            }
+
+            #hardwareCharts .stats-grid,
+            .preview-mode #hardwareCharts .stats-grid {
+                display: inline-flex !important;
+                vertical-align: top !important;
+                width: 100% !important;
+                height: 140px !important;
+                gap: 10px !important;
+                margin-bottom: 10px !important;
+                align-items: stretch !important;
+            }
+
+            #hardwareCharts .hardware-stat-card,
+            .preview-mode #hardwareCharts .hardware-stat-card {
+                flex: 1 !important;
+                padding: 12px 10px !important;
+                background: #FFFFFF !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(26, 24, 20, 0.08) !important;
+                position: relative !important;
+                overflow: hidden !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-shadow: none !important;
+                min-width: 0 !important;
+            }
+
+            #hardwareCharts .hardware-stat-card::before,
+            .preview-mode #hardwareCharts .hardware-stat-card::before {
+                height: 4px !important;
+            }
+
+            #hardwareCharts .hardware-stat-value,
+            .preview-mode #hardwareCharts .hardware-stat-value {
+                font-size: 3.4rem !important;
+                line-height: 1 !important;
+                font-weight: 500 !important;
+                white-space: nowrap !important;
+                font-family: var(--font-sans) !important;
+            }
+
+            #hardwareCharts .hardware-stat-label,
+            .preview-mode #hardwareCharts .hardware-stat-label {
+                font-size: 0.95rem !important;
+                margin-top: 8px !important;
+                line-height: 1.25 !important;
+                text-align: center !important;
+            }
+
+            /* ハード: カメラ残り非表示時はチャート全幅 */
+            #hardwareCharts .chart-card,
+            .preview-mode #hardwareCharts .chart-card {
+                width: 100% !important;
+                height: 310px !important;
+                margin-bottom: 0 !important;
+            }
+
+            /* ハード: カメラ残り表示時は横並び */
+            #hardwareCharts.has-remaining .chart-card,
+            .preview-mode #hardwareCharts.has-remaining .chart-card {
+                width: 58% !important;
+                margin-right: 2% !important;
+            }
+
+            /* カメラ残り - 印刷時表示 */
+            #hardwareCharts.has-remaining .hw-print-remaining,
+            .preview-mode #hardwareCharts.has-remaining .hw-print-remaining {
+                display: inline-flex !important;
+                vertical-align: top !important;
+                width: 38% !important;
+                height: 310px !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: #FFFFFF !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(26, 24, 20, 0.08) !important;
+                padding: 20px !important;
+                text-align: center !important;
+                font-size: 10px !important;
+            }
+
+            .hw-print-remaining-icon {
+                font-size: 2.5rem;
+                margin-bottom: 12px;
+            }
+
+            .hw-print-remaining-title {
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: #8B7355;
+                margin-bottom: 16px;
+            }
+
+            .hw-print-remaining-count {
+                font-family: var(--font-sans);
+                font-variant-numeric: tabular-nums;
+                font-size: 4rem;
+                font-weight: 500;
+                color: #C4A35A;
+                line-height: 1;
+            }
+
+            .hw-print-remaining-unit {
+                font-size: 1.2rem;
+                font-weight: 500;
+                color: #8B7355;
+                margin-top: 4px;
+            }
+
+            .hw-print-remaining-detail {
+                font-size: 0.72rem;
+                color: var(--nk-text-secondary, #5C564C);
+                margin-top: 12px;
+                font-family: var(--font-mono);
+            }
+
+            .hw-print-remaining-baseline {
+                font-size: 0.68rem;
+                color: var(--nk-text-tertiary, #8A847A);
+                margin-top: 6px;
             }
 
             /* ===== ROW 2: Two Charts ===== */
@@ -2360,9 +2670,9 @@
         .service-table th:nth-child(3) { width: 30%; }
 
         .service-table td {
-            padding: 8px 12px;
+            padding: 5px 10px;
             border-bottom: 1px solid var(--nk-border-light);
-            font-size: 13px;
+            font-size: 12px;
             text-align: center;
         }
 
@@ -2383,10 +2693,10 @@
             border: none;
             background: transparent;
             font-family: var(--font-sans);
-            font-size: 13px;
+            font-size: 12px;
             color: var(--nk-text);
             text-align: center;
-            padding: 4px 0;
+            padding: 3px 0;
         }
 
         .service-table input[data-field="name"] {
@@ -2450,7 +2760,7 @@
             font-weight: 600;
             background: var(--nk-bg-white);
             border-bottom: 2px solid var(--nk-border);
-            padding: 10px 12px;
+            padding: 6px 10px;
         }
 
         .service-table tbody tr.subtotal-row:hover td {
@@ -2463,11 +2773,11 @@
 
         /* Service Budget Section */
         .service-budget-section {
-            padding: 16px 20px;
+            padding: 12px 16px;
             background: var(--nk-bg-secondary);
             border-radius: var(--radius-md);
             border: 1px solid var(--nk-border-light);
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .service-budget-title {
@@ -2537,10 +2847,10 @@
 
         .service-stat-value {
             font-family: var(--font-sans);
-            font-variant-numeric: tabular-nums;
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 500;
             line-height: 1.2;
+            font-variant-numeric: tabular-nums;
         }
 
         .service-stat-label {
@@ -2551,14 +2861,14 @@
 
         /* Service progress bar (amount-based) */
         .service-progress-item {
-            margin-bottom: 16px;
+            margin-bottom: 10px;
         }
 
         .service-progress-label {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 6px;
+            margin-bottom: 4px;
         }
 
         .service-progress-name {
@@ -2829,7 +3139,7 @@
             body.print-all-mode #serviceCharts .service-stat-value {
                 font-size: 3.4rem !important;
                 line-height: 1 !important;
-                font-weight: 600 !important;
+                font-weight: 500 !important;
                 white-space: nowrap !important;
                 font-family: var(--font-sans) !important;
             }
@@ -2909,23 +3219,20 @@
             background: linear-gradient(135deg, rgba(139, 115, 85, 0.06), rgba(196, 163, 90, 0.06));
             border: 1px solid rgba(139, 115, 85, 0.15);
             border-radius: var(--radius-lg);
-            padding: 16px 20px;
-            margin-bottom: 16px;
+            padding: 12px 16px;
+            margin-bottom: 12px;
         }
         .hardware-budget-title {
             font-family: var(--font-sans);
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 600;
             color: #8B7355;
-            margin-bottom: 12px;
+            margin-bottom: 10px;
             letter-spacing: 0.02em;
         }
         .hardware-budget-grid {
             display: grid;
             gap: 12px;
-        }
-        .hardware-budget-2col {
-            grid-template-columns: repeat(2, 1fr);
         }
         .hardware-budget-item {
             display: flex;
@@ -3009,17 +3316,14 @@
         .hardware-table tbody tr.subtotal-row:hover td {
             background: rgba(26, 24, 20, 0.02);
         }
+        .hardware-table .rate-cell {
+            font-weight: 600;
+            text-align: center;
+            color: var(--nk-text-secondary);
+        }
         .hardware-table .label-cell {
             font-weight: 500;
             color: var(--nk-text);
-        }
-
-        .hw-rate-cell {
-            text-align: center;
-            font-family: var(--font-mono);
-            font-weight: 500;
-            font-size: 0.95rem;
-            color: var(--nk-text-secondary);
         }
 
         .hardware-stat-card {
@@ -3042,10 +3346,10 @@
         }
         .hardware-stat-value {
             font-family: var(--font-sans);
-            font-variant-numeric: tabular-nums;
             font-size: 22px;
-            font-weight: 700;
+            font-weight: 500;
             line-height: 1.2;
+            font-variant-numeric: tabular-nums;
         }
         .hardware-stat-label {
             font-family: var(--font-sans);
@@ -3123,392 +3427,11 @@
             font-weight: 700;
             font-size: 16px;
         }
-
-        /* ============================================
-           Mobile Responsive — iPhone 16 Pro Max (430px)
-           編集ビューの入力欄が横幅に収まることを最優先
-           ============================================ */
-        @media screen and (max-width: 768px) {
-            /* --- 全体レイアウト --- */
-            html, body {
-                overflow-x: hidden;
-                -webkit-text-size-adjust: 100%;
-            }
-
-            body {
-                padding: 0;
-            }
-
-            .app-container {
-                border-radius: 0;
-                border: none;
-                box-shadow: none;
-                max-width: 100%;
-            }
-
-            /* --- ヘッダー --- */
-            .header {
-                flex-wrap: wrap;
-                padding: 12px 16px;
-                gap: 8px;
-            }
-
-            .header-left {
-                width: 100%;
-                display: flex;
-                align-items: baseline;
-                gap: 8px;
-            }
-
-            .header-title h1 {
-                font-size: 1rem;
-                white-space: nowrap;
-            }
-
-            .update-date {
-                font-size: 0.7rem;
-                padding: 2px 8px;
-            }
-
-            .view-toggle {
-                width: 100%;
-                display: flex;
-            }
-
-            .view-toggle-btn {
-                flex: 1;
-                padding: 10px 4px;
-                font-size: 13px;
-                min-height: 40px;
-            }
-
-            .header-actions {
-                width: 100%;
-                display: flex;
-                justify-content: flex-end;
-                gap: 6px;
-            }
-
-            .header-actions button {
-                padding: 8px 12px;
-                font-size: 12px;
-                min-height: 36px;
-            }
-
-            .btn-unlock {
-                font-size: 11px !important;
-                padding: 6px 10px !important;
-            }
-
-            /* --- 編集/プレビュー切替・ロックボタン: モバイルでは非表示 --- */
-            .header-actions {
-                display: none !important;
-            }
-
-            /* --- メインコンテンツ: 1カラム --- */
-            .main-content {
-                display: flex;
-                flex-direction: column;
-                grid-template-columns: unset;
-            }
-
-            .left-panel {
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-                padding: 12px 10px;
-                gap: 12px;
-            }
-
-            .right-panel {
-                padding: 16px 10px;
-                gap: 16px;
-            }
-
-            /* --- 保証テーブル: 実績添付率(4列目)・達成(6列目)を編集時に非表示 --- */
-            .edit-mode .data-table th:nth-child(4),
-            .edit-mode .data-table td:nth-child(4),
-            .edit-mode .data-table th:nth-child(6),
-            .edit-mode .data-table td:nth-child(6) {
-                display: none;
-            }
-
-            /* 残り4列の幅調整: 項目 / 実績 / 目標 / 目標率 */
-            .edit-mode .data-table th:nth-child(1) { width: 26%; }
-            .edit-mode .data-table th:nth-child(2) { width: 24%; }
-            .edit-mode .data-table th:nth-child(3) { width: 24%; }
-            .edit-mode .data-table th:nth-child(5) { width: 26%; }
-
-            .data-table {
-                font-size: 0.8rem;
-            }
-
-            .data-table th {
-                padding: 8px 4px;
-                font-size: 0.6rem;
-            }
-
-            .data-table td {
-                padding: 6px 4px;
-            }
-
-            /* --- テキスト切れ防止: 項目名のフォントサイズ縮小 --- */
-            .data-table td:first-child input[data-field="name"] {
-                font-size: 11px !important;
-                min-height: 32px;
-                padding: 4px 2px;
-            }
-
-            .service-table td:first-child input[data-field="name"],
-            .service-table td:first-child {
-                font-size: 12px !important;
-            }
-
-            .hardware-table .label-cell {
-                font-size: 13px;
-            }
-
-            /* --- 全テーブル入力フィールド: iOS自動ズーム防止 --- */
-            input[type="number"],
-            input[type="text"],
-            select {
-                font-size: 16px !important;
-                min-height: 36px;
-                -webkit-appearance: none;
-                appearance: none;
-            }
-
-            .cell-with-unit input {
-                width: 100%;
-                min-width: 0;
-            }
-
-            .cell-with-unit {
-                gap: 2px;
-            }
-
-            .unit-display {
-                font-size: 11px;
-            }
-
-            .percent-suffix {
-                font-size: 12px;
-            }
-
-            /* --- セクションカード --- */
-            .section-card {
-                border-radius: 8px;
-            }
-
-            .section-header {
-                padding: 10px 12px;
-            }
-
-            .section-title {
-                font-size: 0.8rem;
-            }
-
-            .section-body {
-                padding: 8px 10px;
-            }
-
-            /* --- 予算セクション --- */
-            .budget-section {
-                padding: 12px;
-            }
-
-            .budget-inputs {
-                flex-direction: column;
-                gap: 10px;
-            }
-
-            .budget-input-wrapper input {
-                width: 100%;
-            }
-
-            /* --- サービスビュー --- */
-            .service-table {
-                font-size: 0.8rem;
-                table-layout: auto;
-            }
-
-            .service-table th {
-                padding: 8px 4px;
-                font-size: 0.6rem;
-            }
-
-            .service-table td {
-                padding: 6px 4px;
-            }
-
-            .service-table th:first-child {
-                width: 50%;
-            }
-
-            .service-budget-grid {
-                grid-template-columns: 1fr 1fr;
-                gap: 8px;
-            }
-
-            /* --- ハードビュー --- */
-            .hardware-table {
-                font-size: 0.8rem;
-            }
-
-            .hardware-table th {
-                padding: 8px 4px;
-                font-size: 0.6rem;
-            }
-
-            .hardware-table td {
-                padding: 6px 4px;
-            }
-
-            .hardware-budget-2col {
-                grid-template-columns: 1fr;
-            }
-
-            .hardware-budget-section {
-                padding: 12px;
-            }
-
-            .hardware-budget-item input,
-            .hardware-budget-item select {
-                width: 100%;
-                min-width: 0;
-                box-sizing: border-box;
-            }
-
-            /* --- フッターアクション --- */
-            .footer-actions {
-                padding: 12px;
-                gap: 8px;
-                flex-wrap: wrap;
-            }
-
-            .footer-actions .btn {
-                flex: 1;
-                min-width: 80px;
-                min-height: 44px;
-                font-size: 14px;
-            }
-
-            /* 印刷ボタン: モバイルでは非表示 */
-            .footer-actions .btn-secondary {
-                display: none;
-            }
-
-            /* --- チャート（低優先度: 基本的なレスポンシブ） --- */
-            .donut-chart-container {
-                flex-direction: column;
-                align-items: center;
-                gap: 12px;
-            }
-
-            .donut-chart-visual {
-                width: 180px;
-                height: 180px;
-            }
-
-            .donut-chart-legend {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .stats-grid {
-                gap: 8px;
-            }
-
-            .stat-card,
-            .service-stat-card,
-            .hardware-stat-card {
-                padding: 12px 8px;
-            }
-
-            .stat-value {
-                font-size: 1.5rem;
-            }
-
-            .stat-label,
-            .service-stat-label,
-            .hardware-stat-label {
-                font-size: 10px;
-            }
-
-            .chart-card {
-                padding: 12px;
-            }
-
-            .chart-wrapper {
-                height: 220px;
-            }
-
-            /* --- プレビューモード: テーブル非表示でチャートのみ --- */
-            .preview-mode .main-content {
-                flex-direction: column;
-            }
-
-            .preview-mode .left-panel {
-                display: none;
-            }
-
-            .preview-mode .right-panel {
-                padding: 12px;
-            }
-
-            .preview-mode .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
-
-            /* --- Toast --- */
-            .toast {
-                left: 50%;
-                transform: translateX(-50%);
-                right: auto;
-                max-width: 90vw;
-                bottom: 20px;
-            }
-
-            /* --- 予算プログレスバー --- */
-            .budget-progress-container {
-                padding: 12px;
-            }
-
-            .budget-amounts {
-                font-size: 0.8rem;
-            }
-
-            .budget-breakdown {
-                flex-direction: column;
-                gap: 4px;
-            }
-
-            /* --- サービス予算メーター --- */
-            .service-budget-meter {
-                flex-wrap: wrap;
-                gap: 8px;
-                padding: 10px 12px;
-            }
-
-            .service-budget-meter-item {
-                flex: 1;
-                min-width: 70px;
-            }
-
-            /* --- ハード残りTIP --- */
-            .camera-remaining-tip {
-                padding: 8px 10px;
-            }
-
-            .camera-remaining-text {
-                font-size: 12px;
-            }
-        }
     </style>
+
 </head>
 <body>
-    <div class="app-container edit-mode" id="mainContainer">
+    <div class="app-container" id="mainContainer">
         <!-- Header -->
         <div class="header">
             <div class="header-left">
@@ -3976,7 +3899,7 @@
                     <!-- 予算設定セクション -->
                     <div class="hardware-budget-section">
                         <div class="hardware-budget-title">ハード部門 目標設定</div>
-                        <div class="hardware-budget-grid hardware-budget-2col">
+                        <div class="hardware-budget-grid" style="grid-template-columns: repeat(2, 1fr);">
                             <div class="hardware-budget-item">
                                 <label>カメラ予算</label>
                                 <input type="number" id="hwBudgetCamera" value="0" min="0" step="10000" oninput="calculateHardwareAll()" />
@@ -3986,7 +3909,7 @@
                                 <input type="number" id="hwBudgetLens" value="0" min="0" step="10000" oninput="calculateHardwareAll()" />
                             </div>
                         </div>
-                        <div class="hardware-budget-grid hardware-budget-2col" style="margin-top: 10px;">
+                        <div class="hardware-budget-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: 10px;">
                             <div class="hardware-budget-item">
                                 <label>基準カメラ</label>
                                 <select id="hwBaselineCamera" onchange="calculateHardwareAll()">
@@ -4013,15 +3936,15 @@
                                 <thead>
                                     <tr>
                                         <th>項目</th>
-                                        <th style="width:140px;">売上金額</th>
-                                        <th style="width:120px;">進捗率</th>
+                                        <th style="width:180px;">売上金額</th>
+                                        <th style="width:100px;">達成率</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr data-hw="cameraNew">
                                         <td class="label-cell">新品カメラ</td>
                                         <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
-                                        <td class="hw-rate-cell" id="hwCameraRate">0.0%</td>
+                                        <td class="rate-cell" id="hwCameraRate">-</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -4039,15 +3962,15 @@
                                 <thead>
                                     <tr>
                                         <th>項目</th>
-                                        <th style="width:140px;">売上金額</th>
-                                        <th style="width:120px;">進捗率</th>
+                                        <th style="width:180px;">売上金額</th>
+                                        <th style="width:100px;">達成率</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr data-hw="lensNew">
                                         <td class="label-cell">新品レンズ</td>
                                         <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
-                                        <td class="hw-rate-cell" id="hwLensRate">0.0%</td>
+                                        <td class="rate-cell" id="hwLensRate">-</td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -4311,6 +4234,16 @@
                         </div>
                     </div>
 
+                    <!-- カメラ残り台数 - 基準カメラ換算 -->
+                    <div class="hw-print-remaining" id="hwPrintRemaining">
+                        <div class="hw-print-remaining-icon"></div>
+                        <div class="hw-print-remaining-title">予算残 カメラ台数換算</div>
+                        <div class="hw-print-remaining-count" id="hwPrintRemainingCount">0</div>
+                        <div class="hw-print-remaining-unit">台分</div>
+                        <div class="hw-print-remaining-detail" id="hwPrintRemainingDetail"></div>
+                        <div class="hw-print-remaining-baseline" id="hwPrintRemainingBaseline"></div>
+                    </div>
+
                     <!-- Hardware Achievement Chart -->
                     <div class="chart-card">
                         <div class="chart-header">
@@ -4335,7 +4268,7 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script>
+        <script>
         // Global state
         let isEditMode = true;
         let isItemsUnlocked = false;
@@ -4386,45 +4319,42 @@
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
-            // まず localStorage からロード（即座に表示）
-            loadData();
-            loadServiceData();
-            loadHardwareData();
+            // UI 初期化（データロード前に実行可能な処理）
             setupHardwareBaselineHandler();
             setupHardwareTableListeners();
-            loadViewState();
             updateDate();
             setupEventListeners();
-            calculateAll();
-            calculateServiceAll();
-            calculateHardwareAll();
             initCharts();
-            updateServiceProgress();
-            updateHardwareProgress();
 
-            // クラウドからデータをロード（非同期、最新データで上書き）
-            loadFromCloud().then(function(cloud) {
-                if (cloud && applyCloudData(cloud)) {
+            // Google Sheets からデータをロード
+            google.script.run
+                .withSuccessHandler(function(data) {
+                    if (data) {
+                        applyLoadedData(data);
+                    }
+                    // データ適用後に計算・描画
                     calculateAll();
                     calculateServiceAll();
                     calculateHardwareAll();
                     updateCharts();
                     updateStats();
-                    if (serviceChartsInitialized) {
-                        updateServiceCharts();
-                        updateServiceProgress();
-                    }
-                    if (hardwareChartsInitialized) {
-                        updateHardwareCharts();
-                        updateHardwareProgress();
-                    }
-                    var sv = cloud.dashboardViewState;
-                    if (sv && (sv === 'warranty' || sv === 'service' || sv === 'hardware')) {
-                        setView(sv);
-                    }
-                    showToast('クラウドから最新データを取得しました');
-                }
-            });
+                    updateServiceProgress();
+                    updateHardwareProgress();
+                    showToast('データを読み込みました');
+                })
+                .withFailureHandler(function(err) {
+                    console.error('Failed to load data from Sheets:', err);
+                    // 計算・描画はデフォルト値で実行
+                    calculateAll();
+                    calculateServiceAll();
+                    calculateHardwareAll();
+                    updateCharts();
+                    updateStats();
+                    updateServiceProgress();
+                    updateHardwareProgress();
+                    showToast('データ読み込みに失敗しました', true);
+                })
+                .loadAllData();
 
             // 印刷時にChart.jsのチャートを適切にリサイズし、ラベルがはみ出さないようにする
             window.addEventListener('beforeprint', function() {
@@ -4625,6 +4555,11 @@
                 }
             }
 
+            // ハード: カメラ残り表示をプレビューモードに応じて更新
+            if (currentView === 'hardware') {
+                updateHardwareProgress();
+            }
+
             // Resize charts after mode change
             setTimeout(() => {
                 if (currentView === 'warranty') {
@@ -4712,8 +4647,7 @@
                 }, 50);
             }
 
-            // Save view state
-            localStorage.setItem('dashboardViewState', view);
+            // View state は saveData() 時にまとめて保存
         }
 
         // Calculate all rates
@@ -5358,23 +5292,16 @@
             };
         }
 
-        // Load data
-        function loadData() {
-            const saved = localStorage.getItem('warrantyDashboardData');
-            if (!saved) return;
-
+        // Load warranty data from parsed object
+        function loadData(parsed) {
+            if (!parsed) return;
             try {
-                const parsed = JSON.parse(saved);
-                // 新形式（savedAt付き）か旧形式かを判定
-                const data = parsed.data ? parsed.data : parsed;
-
+                var data = parsed.data ? parsed.data : parsed;
                 setRowData('table1', 'hard', data.table1.hard);
                 setRowData('table1', 'warranty', data.table1.warranty);
                 setRowData('table1', 'support', data.table1.support);
                 setRowData('table2', 'used', data.table2.used);
                 setRowData('table2', 'usedSupport', data.table2.usedSupport);
-
-                // 予算データを復元
                 if (parsed.budget) {
                     document.getElementById('warrantyBudget').value = parsed.budget.warrantyBudget || 0;
                     document.getElementById('warrantyActualAmount').value = parsed.budget.warrantyActualAmount || 0;
@@ -5447,15 +5374,11 @@
             }
         }
 
-        // ===== CLOUD SYNC (D1) =====
-        var cloudSyncVersions = {};
+        // ===== Google Sheets データ連携 =====
 
-        function getApiBase() {
-            return window.location.origin;
-        }
-
-        // Cloudflare Access 経由の場合はブラウザが自動でクッキーを送信するため追加ヘッダー不要
-
+        /**
+         * 全データを収集（保存用）
+         */
         function collectAllData() {
             var data = getTableData();
             var budgetData = {
@@ -5495,165 +5418,50 @@
             };
         }
 
-        function syncToCloud() {
-            var allData = collectAllData();
-            allData.baseVersions = cloudSyncVersions;
-
-            return fetch(getApiBase() + '/api/sync', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                credentials: 'same-origin',
-                body: JSON.stringify(allData)
-            })
-            .then(function(res) { return res.json(); })
-            .then(function(result) {
-                if (result.ok) {
-                    if (result.meta && result.meta.versions) {
-                        cloudSyncVersions = result.meta.versions;
-                    }
-                    return { ok: true };
-                } else if (result.error === 'VERSION_CONFLICT') {
-                    return { ok: false, conflict: true, latest: result };
-                }
-                return { ok: false, error: result.error };
-            })
-            .catch(function(err) {
-                console.warn('Cloud sync failed (offline?):', err);
-                return { ok: false, offline: true };
-            });
-        }
-
-        function loadFromCloud() {
-            return fetch(getApiBase() + '/api/sync', {
-                credentials: 'same-origin',
-            })
-                .then(function(res) { return res.json(); })
-                .then(function(result) {
-                    if (!result || !result.ok) return null;
-                    if (result.meta && result.meta.versions) {
-                        cloudSyncVersions = result.meta.versions;
-                    }
-                    return result;
-                })
-                .catch(function(err) {
-                    console.warn('Cloud load failed (offline?):', err);
-                    return null;
-                });
-        }
-
-        function applyCloudData(cloud) {
+        /**
+         * Google Sheets から読み込んだデータを DOM に適用
+         */
+        function applyLoadedData(cloud) {
             if (!cloud) return false;
 
             if (cloud.warrantyDashboardData) {
-                var wd = cloud.warrantyDashboardData;
-                var wData = wd.data || wd;
-                if (wData.table1) {
-                    setRowData('table1', 'hard', wData.table1.hard);
-                    setRowData('table1', 'warranty', wData.table1.warranty);
-                    setRowData('table1', 'support', wData.table1.support);
-                }
-                if (wData.table2) {
-                    setRowData('table2', 'used', wData.table2.used);
-                    setRowData('table2', 'usedSupport', wData.table2.usedSupport);
-                }
-                if (wd.budget) {
-                    document.getElementById('warrantyBudget').value = wd.budget.warrantyBudget || 0;
-                    document.getElementById('warrantyActualAmount').value = wd.budget.warrantyActualAmount || 0;
-                }
-                localStorage.setItem('warrantyDashboardData', JSON.stringify(wd));
+                loadData(cloud.warrantyDashboardData);
             }
 
             if (cloud.serviceDashboardData) {
-                var sd = cloud.serviceDashboardData;
-                if (sd.budget) {
-                    document.getElementById('svcBudgetBase').value = sd.budget.budgetBase ?? 304000;
-                    document.getElementById('svcTargetMaint').value = sd.budget.targetMaint ?? 281000;
-                    document.getElementById('svcTargetSetup').value = sd.budget.targetSetup ?? 55000;
-                }
-                if (sd.services) {
-                    ['serviceTable1', 'serviceTable2'].forEach(function(tableId) {
-                        document.querySelectorAll('#' + tableId + ' tbody tr:not(.subtotal-row)').forEach(function(row) {
-                            var key = row.dataset.service;
-                            if (!key || !sd.services[key]) return;
-                            var d = sd.services[key];
-                            var custInput = row.querySelector('input[data-field="customers"]');
-                            var salesInput = row.querySelector('input[data-field="sales"]');
-                            if (custInput && custInput.type === 'number') custInput.value = d.customers || 0;
-                            if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
-                        });
-                    });
-                }
-                localStorage.setItem('serviceDashboardData', JSON.stringify(sd));
+                loadServiceData(cloud.serviceDashboardData);
             }
 
             if (cloud.hardwareDashboardData) {
-                var hd = cloud.hardwareDashboardData;
-                if (hd.budget) {
-                    document.getElementById('hwBudgetCamera').value = hd.budget.camera ?? 0;
-                    document.getElementById('hwBudgetLens').value = hd.budget.lens ?? 0;
-                    var selBaseline = document.getElementById('hwBaselineCamera');
-                    if (hd.budget.baselineCamera) {
-                        selBaseline.value = hd.budget.baselineCamera;
-                        if (selBaseline.value !== hd.budget.baselineCamera) selBaseline.value = 'custom';
-                    }
-                    if (hd.budget.baselineCustomPrice) {
-                        document.getElementById('hwBaselineCustomPrice').value = hd.budget.baselineCustomPrice;
-                    }
-                    document.getElementById('hwCustomPriceWrap').style.display = selBaseline.value === 'custom' ? '' : 'none';
-                }
-                if (hd.items) {
-                    ['hwCameraTable', 'hwLensTable'].forEach(function(tableId) {
-                        document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(function(row) {
-                            var key = row.dataset.hw;
-                            if (!key || !hd.items[key]) return;
-                            var d = hd.items[key];
-                            var salesInput = row.querySelector('input[data-field="sales"]');
-                            if (salesInput) salesInput.value = d.sales || 0;
-                        });
-                    });
-                }
-                localStorage.setItem('hardwareDashboardData', JSON.stringify(hd));
+                loadHardwareData(cloud.hardwareDashboardData);
             }
 
             if (cloud.dashboardViewState && (cloud.dashboardViewState === 'warranty' || cloud.dashboardViewState === 'service' || cloud.dashboardViewState === 'hardware')) {
-                localStorage.setItem('dashboardViewState', cloud.dashboardViewState);
+                setView(cloud.dashboardViewState);
             }
 
             return true;
         }
 
-        // Save data (all views)
+        // Save data (all views) → Google Sheets
         function saveData() {
-            // 保証データを保存
-            const data = getTableData();
-            const saveDate = new Date().toISOString();
-            const budgetData = {
-                warrantyBudget: parseInt(document.getElementById('warrantyBudget').value) || 0,
-                warrantyActualAmount: parseInt(document.getElementById('warrantyActualAmount').value) || 0
-            };
-            const saveObject = {
-                data: data,
-                budget: budgetData,
-                savedAt: saveDate
-            };
-            localStorage.setItem('warrantyDashboardData', JSON.stringify(saveObject));
+            var allData = collectAllData();
 
-            // サービスデータも保存
-            saveServiceData();
+            showToast('保存中...');
 
-            // ハードデータも保存
-            saveHardwareData();
-
-            // クラウドに同期
-            syncToCloud().then(function(result) {
-                if (result.ok) {
-                    showToast('データを保存しました（クラウド同期済み）');
-                } else if (result.conflict) {
-                    showToast('バージョン競合が発生しました。リロードしてください。', true);
-                } else {
-                    showToast('ローカル保存済み（クラウド同期は後で再試行）');
-                }
-            });
+            google.script.run
+                .withSuccessHandler(function(result) {
+                    if (result && result.ok) {
+                        showToast('データを保存しました');
+                    } else {
+                        showToast('保存に失敗しました', true);
+                    }
+                })
+                .withFailureHandler(function(err) {
+                    console.error('Save failed:', err);
+                    showToast('保存エラー: ' + err.message, true);
+                })
+                .saveAllData(allData);
         }
 
         // ===== SERVICE VIEW FUNCTIONS =====
@@ -6028,61 +5836,26 @@
             updateServiceProgress();
         }
 
-        // Save service data
-        function saveServiceData() {
-            const tableData = {};
+        // saveServiceData は collectAllData() に統合済み（saveData 経由で一括保存）
+        function saveServiceData() { /* no-op: GAS版は saveData() で一括保存 */ }
 
-            // Save service table 1 & 2 data
-            ['serviceTable1', 'serviceTable2'].forEach(tableId => {
-                document.querySelectorAll(`#${tableId} tbody tr:not(.subtotal-row)`).forEach(row => {
-                    const key = row.dataset.service;
-                    if (!key) return;
-                    tableData[key] = {
-                        customers: parseInt(row.querySelector('input[data-field="customers"]')?.value) || 0,
-                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0
-                    };
-                });
-            });
-
-            const saveObject = {
-                services: tableData,
-                budget: {
-                    budgetBase: parseInt(document.getElementById('svcBudgetBase').value) || 0,
-                    targetMaint: parseInt(document.getElementById('svcTargetMaint').value) || 0,
-                    targetSetup: parseInt(document.getElementById('svcTargetSetup').value) || 0
-                },
-                savedAt: new Date().toISOString()
-            };
-
-            localStorage.setItem('serviceDashboardData', JSON.stringify(saveObject));
-        }
-
-        // Load service data
-        function loadServiceData() {
-            const saved = localStorage.getItem('serviceDashboardData');
-            if (!saved) return;
-
+        // Load service data from parsed object
+        function loadServiceData(parsed) {
+            if (!parsed) return;
             try {
-                const parsed = JSON.parse(saved);
-
-                // Restore budget settings
                 if (parsed.budget) {
                     document.getElementById('svcBudgetBase').value = parsed.budget.budgetBase ?? 304000;
                     document.getElementById('svcTargetMaint').value = parsed.budget.targetMaint ?? 281000;
                     document.getElementById('svcTargetSetup').value = parsed.budget.targetSetup ?? 55000;
                 }
-
-                // Restore service table data
                 if (parsed.services) {
                     ['serviceTable1', 'serviceTable2'].forEach(tableId => {
                         document.querySelectorAll(`#${tableId} tbody tr:not(.subtotal-row)`).forEach(row => {
                             const key = row.dataset.service;
                             if (!key || !parsed.services[key]) return;
-
                             const data = parsed.services[key];
                             const custInput = row.querySelector('input[data-field="customers"]');
                             const salesInput = row.querySelector('input[data-field="sales"]');
-
                             if (custInput && custInput.type === 'number') custInput.value = data.customers || 0;
                             if (salesInput && salesInput.type === 'number') salesInput.value = data.sales || 0;
                         });
@@ -6111,10 +5884,12 @@
             const baselineCamera = document.getElementById('hwBaselineCamera')?.value || '155000';
             const baselineCustomPrice = parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0;
 
+            let cameraSales = 0;
+            let lensSales = 0;
+
             const items = {};
 
-            let cameraSales = 0;
-            document.querySelectorAll('#hwCameraTable tbody tr[data-hw]').forEach(row => {
+            document.querySelectorAll('#hwCameraTable tbody tr').forEach(row => {
                 const key = row.dataset.hw;
                 if (!key) return;
                 const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
@@ -6122,8 +5897,7 @@
                 items[key] = { sales: s };
             });
 
-            let lensSales = 0;
-            document.querySelectorAll('#hwLensTable tbody tr[data-hw]').forEach(row => {
+            document.querySelectorAll('#hwLensTable tbody tr').forEach(row => {
                 const key = row.dataset.hw;
                 if (!key) return;
                 const s = parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
@@ -6136,48 +5910,50 @@
 
             return {
                 budget: { camera: budgetCamera, lens: budgetLens, total: totalBudget, baselineCamera, baselineCustomPrice },
-                camera: { sales: cameraSales, progress: cameraSales, budget: budgetCamera },
-                lens: { sales: lensSales, progress: lensSales, budget: budgetLens },
-                total: { sales: totalSales, progress: totalSales, budget: totalBudget },
+                camera: { sales: cameraSales, budget: budgetCamera },
+                lens: { sales: lensSales, budget: budgetLens },
+                total: { sales: totalSales, budget: totalBudget },
                 items: items
             };
         }
 
         function calculateHardwareAll() {
+            // Camera sales
+            let cameraSales = 0;
+            document.querySelectorAll('#hwCameraTable tbody tr').forEach(row => {
+                if (!row.dataset.hw) return;
+                cameraSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+            });
+
+            // Lens sales
+            let lensSales = 0;
+            document.querySelectorAll('#hwLensTable tbody tr').forEach(row => {
+                if (!row.dataset.hw) return;
+                lensSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
+            });
+
+            // Update rate cells
             const budgetCamera = parseInt(document.getElementById('hwBudgetCamera')?.value) || 0;
             const budgetLens = parseInt(document.getElementById('hwBudgetLens')?.value) || 0;
 
-            // Camera sales & rate
-            let cameraSales = 0;
-            document.querySelectorAll('#hwCameraTable tbody tr[data-hw]').forEach(row => {
-                cameraSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
-            });
-            const cameraRate = budgetCamera > 0 ? (cameraSales / budgetCamera * 100) : 0;
-            const crEl = document.getElementById('hwCameraRate');
-            if (crEl) crEl.textContent = cameraRate.toFixed(1) + '%';
-
-            // Lens sales & rate
-            let lensSales = 0;
-            document.querySelectorAll('#hwLensTable tbody tr[data-hw]').forEach(row => {
-                lensSales += parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0;
-            });
-            const lensRate = budgetLens > 0 ? (lensSales / budgetLens * 100) : 0;
-            const lrEl = document.getElementById('hwLensRate');
-            if (lrEl) lrEl.textContent = lensRate.toFixed(1) + '%';
+            const cameraRateEl = document.getElementById('hwCameraRate');
+            const lensRateEl = document.getElementById('hwLensRate');
+            if (cameraRateEl) cameraRateEl.textContent = budgetCamera > 0 ? (cameraSales / budgetCamera * 100).toFixed(1) + '%' : '-';
+            if (lensRateEl) lensRateEl.textContent = budgetLens > 0 ? (lensSales / budgetLens * 100).toFixed(1) + '%' : '-';
         }
 
         function updateHardwareProgress() {
             const data = getHardwareData();
 
             // Progress bars
-            updateHardwareProgressItem('All', data.total.progress, data.total.budget);
-            updateHardwareProgressItem('Camera', data.camera.progress, data.camera.budget);
-            updateHardwareProgressItem('Lens', data.lens.progress, data.lens.budget);
+            updateHardwareProgressItem('All', data.total.sales, data.total.budget);
+            updateHardwareProgressItem('Camera', data.camera.sales, data.camera.budget);
+            updateHardwareProgressItem('Lens', data.lens.sales, data.lens.budget);
 
             // Stat cards
-            const allRate = data.total.budget > 0 ? (data.total.progress / data.total.budget * 100).toFixed(1) : '0';
-            const cameraRate = data.camera.budget > 0 ? (data.camera.progress / data.camera.budget * 100).toFixed(1) : '0';
-            const lensRate = data.lens.budget > 0 ? (data.lens.progress / data.lens.budget * 100).toFixed(1) : '0';
+            const allRate = data.total.budget > 0 ? (data.total.sales / data.total.budget * 100).toFixed(1) : '0';
+            const cameraRate = data.camera.budget > 0 ? (data.camera.sales / data.camera.budget * 100).toFixed(1) : '0';
+            const lensRate = data.lens.budget > 0 ? (data.lens.sales / data.lens.budget * 100).toFixed(1) : '0';
 
             const statAll = document.getElementById('hwStatAll');
             const statCamera = document.getElementById('hwStatCamera');
@@ -6196,7 +5972,7 @@
 
             // Budget meter
             const budget = data.total.budget;
-            const actual = data.total.progress;
+            const actual = data.total.sales;
             const remaining = budget - actual;
 
             const budgetEl = document.getElementById('hwBudgetTotalDisp');
@@ -6265,20 +6041,36 @@
             const tipEl = document.getElementById('hwCameraRemainingTip');
             const countEl = document.getElementById('hwRemainingCount');
             const detailEl = document.getElementById('hwRemainingDetail');
-            if (!tipEl || !countEl || !detailEl) return;
 
             const baselinePrice = getHardwareBaselinePrice();
-            if (baselinePrice <= 0 || data.camera.budget <= 0) {
-                tipEl.style.display = 'none';
-                return;
+            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.sales);
+            const remainingCount = baselinePrice > 0 ? Math.floor(cameraRemaining / baselinePrice) : 0;
+
+            // 左パネルのTIP更新
+            if (tipEl && countEl && detailEl) {
+                if (baselinePrice <= 0 || data.camera.budget <= 0) {
+                    tipEl.style.display = 'none';
+                } else {
+                    tipEl.style.display = '';
+                    countEl.textContent = remainingCount;
+                    detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+                }
             }
 
-            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.progress);
-            const remainingCount = Math.floor(cameraRemaining / baselinePrice);
+            // 右パネルのカメラ換算カードを更新
+            const printCount = document.getElementById('hwPrintRemainingCount');
+            const printDetail = document.getElementById('hwPrintRemainingDetail');
+            const printBaseline = document.getElementById('hwPrintRemainingBaseline');
+            const hasData = baselinePrice > 0 && data.camera.budget > 0;
 
-            tipEl.style.display = '';
-            countEl.textContent = remainingCount;
-            detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+            if (printCount) printCount.textContent = hasData ? remainingCount : '-';
+            if (printDetail) printDetail.textContent = hasData
+                ? '残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString()
+                : '予算未設定';
+            const sel = document.getElementById('hwBaselineCamera');
+            if (printBaseline && sel) {
+                printBaseline.textContent = hasData ? '基準: ' + sel.options[sel.selectedIndex]?.text : '';
+            }
         }
 
         // Hardware baseline camera dropdown handler
@@ -6332,20 +6124,20 @@
 
         // Build donut data for hardware
         function buildHardwareDonutData(hwData) {
-            var totalProgress = hwData.camera.progress + hwData.lens.progress;
+            var totalSales = hwData.camera.sales + hwData.lens.sales;
             var totalBudget = hwData.total.budget;
-            var remaining = Math.max(0, totalBudget - totalProgress);
+            var remaining = Math.max(0, totalBudget - totalSales);
 
             if (remaining > 0) {
                 return {
                     labels: ['カメラ', 'レンズ', '未達分'],
-                    data: [hwData.camera.progress, hwData.lens.progress, remaining],
+                    data: [hwData.camera.sales, hwData.lens.sales, remaining],
                     colors: [brandColors.gold, brandColors.teal, 'rgba(26, 24, 20, 0.06)']
                 };
             } else {
                 return {
                     labels: ['カメラ', 'レンズ'],
-                    data: [hwData.camera.progress, hwData.lens.progress],
+                    data: [hwData.camera.sales, hwData.lens.sales],
                     colors: [brandColors.gold, brandColors.teal]
                 };
             }
@@ -6458,9 +6250,9 @@
 
             if (hardwareAchievementChart) {
                 const rates = [
-                    data.total.budget > 0 ? (data.total.progress / data.total.budget * 100) : 0,
-                    data.camera.budget > 0 ? (data.camera.progress / data.camera.budget * 100) : 0,
-                    data.lens.budget > 0 ? (data.lens.progress / data.lens.budget * 100) : 0
+                    data.total.budget > 0 ? (data.total.sales / data.total.budget * 100) : 0,
+                    data.camera.budget > 0 ? (data.camera.sales / data.camera.budget * 100) : 0,
+                    data.lens.budget > 0 ? (data.lens.sales / data.lens.budget * 100) : 0
                 ];
                 const chartMax = calculateAchievementChartMax(rates);
                 hardwareAchievementChart.options.scales.y.max = chartMax;
@@ -6472,40 +6264,13 @@
             updateHardwareProgress();
         }
 
-        function saveHardwareData() {
-            const items = {};
-            ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
-                document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(row => {
-                    const key = row.dataset.hw;
-                    if (!key) return;
-                    items[key] = {
-                        sales: parseInt(row.querySelector('input[data-field="sales"]')?.value) || 0
-                    };
-                });
-            });
+        // saveHardwareData は collectAllData() に統合済み（saveData 経由で一括保存）
+        function saveHardwareData() { /* no-op: GAS版は saveData() で一括保存 */ }
 
-            const saveObject = {
-                items: items,
-                budget: {
-                    camera: parseInt(document.getElementById('hwBudgetCamera')?.value) || 0,
-                    lens: parseInt(document.getElementById('hwBudgetLens')?.value) || 0,
-                    baselineCamera: document.getElementById('hwBaselineCamera')?.value || '155000',
-                    baselineCustomPrice: parseInt(document.getElementById('hwBaselineCustomPrice')?.value) || 0
-                },
-                savedAt: new Date().toISOString()
-            };
-
-            localStorage.setItem('hardwareDashboardData', JSON.stringify(saveObject));
-        }
-
-        function loadHardwareData() {
-            const saved = localStorage.getItem('hardwareDashboardData');
-            if (!saved) return;
-
+        // Load hardware data from parsed object
+        function loadHardwareData(parsed) {
+            if (!parsed) return;
             try {
-                const parsed = JSON.parse(saved);
-
-                // Restore budget settings
                 if (parsed.budget) {
                     const bc = document.getElementById('hwBudgetCamera');
                     const bl = document.getElementById('hwBudgetLens');
@@ -6519,14 +6284,11 @@
                     if (customInput) customInput.value = parsed.budget.baselineCustomPrice ?? 0;
                     if (customWrap) customWrap.style.display = (parsed.budget.baselineCamera === 'custom') ? '' : 'none';
                 }
-
-                // Restore table data
                 if (parsed.items) {
                     ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
-                        document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(row => {
+                        document.querySelectorAll('#' + tableId + ' tbody tr').forEach(row => {
                             const key = row.dataset.hw;
                             if (!key || !parsed.items[key]) return;
-
                             const d = parsed.items[key];
                             const salesInput = row.querySelector('input[data-field="sales"]');
                             if (salesInput && salesInput.type === 'number') salesInput.value = d.sales || 0;
@@ -6538,13 +6300,7 @@
             }
         }
 
-        // Load/restore view state
-        function loadViewState() {
-            const savedView = localStorage.getItem('dashboardViewState');
-            if (savedView && (savedView === 'warranty' || savedView === 'service' || savedView === 'hardware')) {
-                setView(savedView);
-            }
-        }
+        // loadViewState は applyLoadedData() 内で処理済み
 
         // Show toast
         function showToast(message, isWarning) {
@@ -6562,5 +6318,6 @@
         // Initial mode
         setMode('edit');
     </script>
+
 </body>
 </html>
