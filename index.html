@@ -1491,6 +1491,20 @@
             height: 12px;
         }
 
+        /* Preview mode: ハードウェアビューのチャート(左) + カメラ換算(右)を3行目に横並び */
+        /* ※ donut(row1) + stats(row2) が各々 grid-column: 1/-1 でフルスパンのため row 3 */
+        .preview-mode #hardwareCharts .chart-card {
+            grid-column: 1;
+            grid-row: 3;
+        }
+        .preview-mode #hardwareCharts .hw-print-remaining {
+            grid-column: 2;
+            grid-row: 3;
+            min-height: 260px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
         /* Toast */
         .toast {
             position: fixed;
@@ -1567,7 +1581,7 @@
                 padding: 8px 16px;
                 background: #FFFFFF !important;
                 border-bottom: 1px solid rgba(26, 24, 20, 0.1);
-                margin-bottom: 10px;
+                margin-bottom: 8px;
             }
 
             .header-left {
@@ -1624,7 +1638,7 @@
             .right-panel,
             .preview-mode .right-panel {
                 display: block !important;
-                padding: 0 12px !important;
+                padding: 0 8px !important;
                 background: #FAF7F2 !important;
                 grid-template-columns: none !important;
                 grid-template-rows: none !important;
@@ -1989,7 +2003,218 @@
                 display: none !important;
             }
 
-            /* ===== ROW 2: Two Charts ===== */
+            /* ===== HARDWARE CHARTS PRINT LAYOUT (A4横 1ページ) ===== */
+            /* Row1: ドーナツ(35%) + Stats(63.5%) = 240px */
+            /* gap: 14px */
+            /* Row2: チャート(55%) + カメラ換算(44%) = 440px */
+            /* 合計: 240 + 14 + 440 = 694px ≒ 698px */
+
+            #hardwareCharts .donut-chart-container {
+                width: 35% !important;
+                height: 240px !important;
+                margin-right: 1.5% !important;
+                margin-bottom: 14px !important;
+                padding: 20px 16px !important;
+                overflow: visible !important;
+            }
+
+            #hardwareCharts .donut-chart-visual {
+                width: 160px !important;
+                height: 160px !important;
+                min-width: 160px !important;
+                min-height: 160px !important;
+            }
+
+            #hardwareCharts .donut-chart-visual canvas {
+                width: 160px !important;
+                height: 160px !important;
+            }
+
+            #hardwareCharts .donut-chart-center {
+                width: 100px !important;
+                height: 60px !important;
+            }
+
+            #hardwareCharts .donut-chart-value {
+                font-size: 2.4rem !important;
+            }
+
+            #hardwareCharts .donut-chart-label {
+                font-size: 0.8rem !important;
+            }
+
+            #hardwareCharts .donut-chart-legend {
+                gap: 12px !important;
+                overflow: visible !important;
+                min-width: 0 !important;
+            }
+
+            #hardwareCharts .donut-legend-item {
+                overflow: visible !important;
+            }
+
+            #hardwareCharts .donut-legend-text {
+                font-size: 1rem !important;
+                flex: 0 0 auto !important;
+            }
+
+            #hardwareCharts .donut-legend-status {
+                font-size: 0.75rem !important;
+                padding: 3px 8px !important;
+                flex-shrink: 0 !important;
+            }
+
+            #hardwareCharts .service-budget-meter {
+                display: flex !important;
+                min-width: 110px !important;
+                padding: 10px 16px !important;
+                gap: 4px !important;
+            }
+
+            #hardwareCharts .service-budget-meter-label {
+                font-size: 0.8rem !important;
+            }
+
+            #hardwareCharts .service-budget-meter-value {
+                font-size: 1.3rem !important;
+                font-weight: 600 !important;
+            }
+
+            #hardwareCharts .service-budget-meter-divider {
+                width: 50px !important;
+            }
+
+            #hardwareCharts .stats-grid {
+                display: inline-flex !important;
+                vertical-align: top !important;
+                width: 63.5% !important;
+                height: 240px !important;
+                gap: 12px !important;
+                margin-bottom: 14px !important;
+                font-size: 10px !important;
+                grid-column: auto !important;
+            }
+
+            #hardwareCharts .hardware-stat-card {
+                flex: 1 !important;
+                padding: 24px 16px !important;
+                background: #FFFFFF !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(26, 24, 20, 0.08) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                align-items: center !important;
+                justify-content: center !important;
+                box-shadow: none !important;
+            }
+
+            #hardwareCharts .hardware-stat-card::before {
+                height: 4px !important;
+            }
+
+            #hardwareCharts .hardware-stat-value {
+                font-size: 5rem !important;
+                line-height: 1 !important;
+                font-weight: 500 !important;
+            }
+
+            #hardwareCharts .hardware-stat-label {
+                font-size: 1.15rem !important;
+                margin-top: 12px !important;
+                text-align: center !important;
+            }
+
+            #hardwareCharts .chart-card {
+                display: inline-flex !important;
+                flex-direction: column !important;
+                vertical-align: top !important;
+                width: 55% !important;
+                height: 440px !important;
+                margin-bottom: 0 !important;
+                margin-right: 1% !important;
+                background: #FFFFFF !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(26, 24, 20, 0.08) !important;
+                padding: 14px 18px 12px !important;
+                font-size: 10px !important;
+                overflow: hidden !important;
+                grid-column: auto !important;
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            #hardwareCharts .chart-card .chart-header {
+                flex-shrink: 0 !important;
+            }
+
+            #hardwareCharts .chart-card .chart-title {
+                font-size: 1.25rem !important;
+            }
+
+            #hardwareCharts .chart-card .chart-wrapper {
+                flex: 1 !important;
+                display: flex !important;
+                align-items: flex-end !important;
+                min-height: 0 !important;
+            }
+
+            #hardwareCharts .chart-card .chart-wrapper canvas {
+                width: 100% !important;
+                height: 90% !important;
+            }
+
+            #hardwareCharts .hw-print-remaining {
+                display: inline-flex !important;
+                vertical-align: top !important;
+                width: 44% !important;
+                height: 440px !important;
+                flex-direction: column !important;
+                justify-content: center !important;
+                align-items: center !important;
+                background: #FFFFFF !important;
+                border-radius: 10px !important;
+                border: 1px solid rgba(26, 24, 20, 0.08) !important;
+                padding: 32px 24px !important;
+                text-align: center !important;
+                font-size: 10px !important;
+                grid-column: auto !important;
+                margin-bottom: 0 !important;
+                margin-right: 0 !important;
+            }
+
+            #hardwareCharts .hw-print-remaining-title {
+                font-size: 1.4rem !important;
+                margin-bottom: 24px !important;
+                letter-spacing: 0.04em !important;
+            }
+
+            #hardwareCharts .hw-print-remaining-count {
+                font-family: var(--font-sans) !important;
+                font-variant-numeric: tabular-nums !important;
+                font-size: 7.5rem !important;
+            }
+
+            #hardwareCharts .hw-print-remaining-unit {
+                font-size: 2rem !important;
+                margin-top: 10px !important;
+            }
+
+            #hardwareCharts .hw-print-remaining-detail {
+                font-size: 1rem !important;
+                margin-top: 24px !important;
+            }
+
+            #hardwareCharts .hw-print-remaining-baseline {
+                font-size: 0.9rem !important;
+                margin-top: 10px !important;
+            }
+
+            #hardwareCharts {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+            }
+
+            /* ===== ROW 2: Two Charts (保証/サービス共通) ===== */
             .chart-card,
             .preview-mode .chart-card {
                 display: inline-flex !important;
@@ -2313,6 +2538,26 @@
         }
         .right-panel > .view-content.active > .chart-card {
             flex: 0 0 auto;
+        }
+
+        /* ハードウェア編集モード: 下部でチャート(左) + カメラ換算カード(右)を横並び */
+        .right-panel > #hardwareCharts.active {
+            flex-direction: row;
+            flex-wrap: wrap;
+        }
+        .right-panel > #hardwareCharts.active > .donut-chart-container,
+        .right-panel > #hardwareCharts.active > .stats-grid {
+            flex: 0 0 100%;
+        }
+        .right-panel > #hardwareCharts.active > .chart-card {
+            flex: 1 1 55%;
+            min-width: 0;
+            order: 1;
+        }
+        .right-panel > #hardwareCharts.active > .hw-print-remaining {
+            flex: 1 1 40%;
+            min-width: 0;
+            order: 2;
         }
 
         /* 左パネル内のタイル間の縦余白（外側パディングは維持） */
@@ -3097,31 +3342,64 @@
             background: linear-gradient(90deg, var(--color-green), #6AAE6A) !important;
         }
 
-        /* Camera remaining tip */
+        /* Camera remaining tip — 右パネルの hw-print-remaining と重複するため非表示 */
         .camera-remaining-tip {
-            margin-top: 14px;
-            padding: 12px 16px;
-            background: linear-gradient(135deg, rgba(196, 163, 90, 0.08), rgba(139, 115, 85, 0.06));
-            border: 1px solid rgba(196, 163, 90, 0.2);
-            border-radius: var(--radius-lg);
+            display: none;
+        }
+
+        /* Hardware Camera Remaining Card - 右パネル常時表示 */
+        .hw-print-remaining {
             display: flex;
+            flex-direction: column;
             align-items: center;
-            gap: 10px;
+            justify-content: center;
+            background: var(--nk-bg-white);
+            border: 1px solid var(--nk-border-light);
+            border-radius: var(--radius-lg);
+            padding: 24px 20px;
+            text-align: center;
         }
-        .camera-remaining-icon {
-            font-size: 20px;
-            flex-shrink: 0;
+
+        .hw-print-remaining-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
         }
-        .camera-remaining-text {
-            font-family: var(--font-sans);
-            font-size: 13px;
-            color: var(--nk-text-secondary);
-            line-height: 1.5;
-        }
-        .camera-remaining-text strong {
+
+        .hw-print-remaining-title {
+            font-size: 0.8rem;
+            font-weight: 600;
             color: #8B7355;
-            font-weight: 700;
-            font-size: 16px;
+            margin-bottom: 12px;
+            letter-spacing: 0.02em;
+        }
+
+        .hw-print-remaining-count {
+            font-family: var(--font-sans);
+            font-variant-numeric: tabular-nums;
+            font-size: 3.2rem;
+            font-weight: 500;
+            color: #C4A35A;
+            line-height: 1;
+        }
+
+        .hw-print-remaining-unit {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #8B7355;
+            margin-top: 4px;
+        }
+
+        .hw-print-remaining-detail {
+            font-size: 0.7rem;
+            color: var(--nk-text-secondary);
+            margin-top: 10px;
+            font-family: var(--font-mono);
+        }
+
+        .hw-print-remaining-baseline {
+            font-size: 0.65rem;
+            color: var(--nk-text-tertiary);
+            margin-top: 4px;
         }
 
         /* ============================================
@@ -4309,6 +4587,16 @@
                             <div class="hardware-stat-value" id="hwStatLens" style="color: #5A7C8A;">0%</div>
                             <div class="hardware-stat-label">レンズ<br>達成率</div>
                         </div>
+                    </div>
+
+                    <!-- カメラ残り台数 - 基準カメラ換算 -->
+                    <div class="hw-print-remaining" id="hwPrintRemaining">
+                        <div class="hw-print-remaining-icon"></div>
+                        <div class="hw-print-remaining-title">予算残 カメラ台数換算</div>
+                        <div class="hw-print-remaining-count" id="hwPrintRemainingCount">0</div>
+                        <div class="hw-print-remaining-unit">台分</div>
+                        <div class="hw-print-remaining-detail" id="hwPrintRemainingDetail"></div>
+                        <div class="hw-print-remaining-baseline" id="hwPrintRemainingBaseline"></div>
                     </div>
 
                     <!-- Hardware Achievement Chart -->
@@ -6262,23 +6550,38 @@
         }
 
         function updateCameraRemainingTip(data) {
+            const baselinePrice = getHardwareBaselinePrice();
+            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.progress);
+            const remainingCount = baselinePrice > 0 ? Math.floor(cameraRemaining / baselinePrice) : 0;
+            const hasData = baselinePrice > 0 && data.camera.budget > 0;
+
+            // 左パネルのTIP更新（非表示だが互換性維持）
             const tipEl = document.getElementById('hwCameraRemainingTip');
             const countEl = document.getElementById('hwRemainingCount');
             const detailEl = document.getElementById('hwRemainingDetail');
-            if (!tipEl || !countEl || !detailEl) return;
-
-            const baselinePrice = getHardwareBaselinePrice();
-            if (baselinePrice <= 0 || data.camera.budget <= 0) {
-                tipEl.style.display = 'none';
-                return;
+            if (tipEl && countEl && detailEl) {
+                if (!hasData) {
+                    tipEl.style.display = 'none';
+                } else {
+                    tipEl.style.display = '';
+                    countEl.textContent = remainingCount;
+                    detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+                }
             }
 
-            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.progress);
-            const remainingCount = Math.floor(cameraRemaining / baselinePrice);
+            // 右パネルのカメラ換算カードを更新
+            const printCount = document.getElementById('hwPrintRemainingCount');
+            const printDetail = document.getElementById('hwPrintRemainingDetail');
+            const printBaseline = document.getElementById('hwPrintRemainingBaseline');
 
-            tipEl.style.display = '';
-            countEl.textContent = remainingCount;
-            detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+            if (printCount) printCount.textContent = hasData ? remainingCount : '-';
+            if (printDetail) printDetail.textContent = hasData
+                ? '残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString()
+                : '予算未設定';
+            const sel = document.getElementById('hwBaselineCamera');
+            if (printBaseline && sel) {
+                printBaseline.textContent = hasData ? '基準: ' + sel.options[sel.selectedIndex]?.text : '';
+            }
         }
 
         // Hardware baseline camera dropdown handler

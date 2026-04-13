@@ -3,6 +3,9 @@
 node_modules/
 .wrangler/
 
+# GAS時代の残骸（Cloudflare移行済み・デプロイ対象外）
+gas/
+
 # Notion CLI / local secrets
 .env
 .env.local
