@@ -6545,9 +6545,11 @@
 
         function updateCameraRemainingTip(data) {
             const baselinePrice = getHardwareBaselinePrice();
-            const cameraRemaining = Math.max(0, data.camera.budget - data.camera.progress);
-            const remainingCount = baselinePrice > 0 ? Math.floor(cameraRemaining / baselinePrice) : 0;
-            const hasData = baselinePrice > 0 && data.camera.budget > 0;
+            const totalBudget = data.camera.budget + data.lens.budget;
+            const totalActual = data.camera.progress + data.lens.progress;
+            const totalRemaining = Math.max(0, totalBudget - totalActual);
+            const remainingCount = baselinePrice > 0 ? Math.floor(totalRemaining / baselinePrice) : 0;
+            const hasData = baselinePrice > 0 && totalBudget > 0;
 
             // 左パネルのTIP更新（非表示だが互換性維持）
             const tipEl = document.getElementById('hwCameraRemainingTip');
@@ -6559,7 +6561,7 @@
                 } else {
                     tipEl.style.display = '';
                     countEl.textContent = remainingCount;
-                    detailEl.textContent = '(残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
+                    detailEl.textContent = '(残額 ¥' + totalRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString() + ')';
                 }
             }
 
@@ -6570,7 +6572,7 @@
 
             if (printCount) printCount.textContent = hasData ? remainingCount : '-';
             if (printDetail) printDetail.textContent = hasData
-                ? '残額 ¥' + cameraRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString()
+                ? '残額 ¥' + totalRemaining.toLocaleString() + ' ÷ ¥' + baselinePrice.toLocaleString()
                 : '予算未設定';
             const sel = document.getElementById('hwBaselineCamera');
             if (printBaseline && sel) {
