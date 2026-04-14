@@ -4883,7 +4883,7 @@
                 container.classList.add('edit-mode');
                 document.getElementById('editModeBtn').classList.add('active');
                 document.getElementById('previewModeBtn').classList.remove('active');
-                document.getElementById('unlockBtn').style.display = 'block';
+                document.getElementById('unlockBtn').style.display = (currentView === 'warranty') ? 'block' : 'none';
 
                 // Move progress panel back to left panel (warranty view)
                 if (progressPanel) {
@@ -4939,6 +4939,9 @@
             document.getElementById('warrantyCharts').classList.toggle('active', view === 'warranty');
             document.getElementById('serviceCharts').classList.toggle('active', view === 'service');
             document.getElementById('hardwareCharts').classList.toggle('active', view === 'hardware');
+
+            // ロックボタンは保証ビュー＋編集モードのみ表示
+            document.getElementById('unlockBtn').style.display = (view === 'warranty' && isEditMode) ? 'block' : 'none';
 
             // Update title
             const title = document.querySelector('.header-title h1');
