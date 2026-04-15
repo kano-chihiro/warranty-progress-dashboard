@@ -4128,8 +4128,8 @@
                                     </tr>
                                     <tr data-service="quickMaint" data-parent="true">
                                         <td><input type="text" value="クイックメンテナンス（総計）" data-field="name" readonly /></td>
-                                        <td><input type="number" value="59" data-field="customers" min="0" /></td>
-                                        <td><input type="number" value="113846" data-field="sales" min="0" step="1000" /></td>
+                                        <td><input type="number" value="59" data-field="customers" min="0" readonly /></td>
+                                        <td><input type="number" value="113846" data-field="sales" min="0" step="1000" readonly /></td>
                                     </tr>
                                     <tr data-service="quickMaint_contact" data-child="quickMaint" class="sub-row">
                                         <td><input type="text" value="└ 接点コーティング" data-field="name" readonly /></td>
@@ -4141,8 +4141,8 @@
                                         <td><input type="number" value="13" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="13000" data-field="sales" min="0" step="1000" /></td>
                                     </tr>
-                                    <tr data-service="cameraNano">
-                                        <td><input type="text" value="カメラナノコーティング" data-field="name" readonly /></td>
+                                    <tr data-service="cameraNano" data-child="quickMaint" class="sub-row">
+                                        <td><input type="text" value="└ カメラナノコーティング" data-field="name" readonly /></td>
                                         <td><input type="number" value="17" data-field="customers" min="0" /></td>
                                         <td><input type="number" value="71897" data-field="sales" min="0" step="1000" /></td>
                                     </tr>
@@ -5959,6 +5959,26 @@
         function calculateServiceTable(tableId, subtotalId) {
             const table = document.getElementById(tableId);
             if (!table) return;
+
+            // 親行の自動集計: data-parent="true" の行ごとに、対応する data-child の合計を反映
+            table.querySelectorAll('tbody tr[data-parent="true"]').forEach(parentRow => {
+                const parentKey = parentRow.dataset.service;
+                if (!parentKey) return;
+
+                let parentCust = 0;
+                let parentSales = 0;
+                table.querySelectorAll(`tbody tr[data-child="${parentKey}"]`).forEach(childRow => {
+                    const cInput = childRow.querySelector('input[data-field="customers"]');
+                    const sInput = childRow.querySelector('input[data-field="sales"]');
+                    if (cInput && cInput.type === 'number') parentCust += parseInt(cInput.value) || 0;
+                    if (sInput && sInput.type === 'number') parentSales += parseInt(sInput.value) || 0;
+                });
+
+                const parentCustInput = parentRow.querySelector('input[data-field="customers"]');
+                const parentSalesInput = parentRow.querySelector('input[data-field="sales"]');
+                if (parentCustInput) parentCustInput.value = parentCust;
+                if (parentSalesInput) parentSalesInput.value = parentSales;
+            });
 
             let totalCustomers = 0;
             let totalSales = 0;
