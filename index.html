@@ -4297,9 +4297,24 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr data-hw="cameraNew">
-                                        <td class="label-cell">新品カメラ</td>
+                                    <tr data-hw="cameraNewMirrorless">
+                                        <td class="label-cell">ミラーレス一眼</td>
                                         <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td class="hw-rate-cell">—</td>
+                                    </tr>
+                                    <tr data-hw="cameraNewDslr">
+                                        <td class="label-cell">デジタル一眼レフ</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td class="hw-rate-cell">—</td>
+                                    </tr>
+                                    <tr data-hw="cameraNewCompact">
+                                        <td class="label-cell">コンパクトデジタル</td>
+                                        <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
+                                        <td class="hw-rate-cell">—</td>
+                                    </tr>
+                                    <tr class="subtotal-row">
+                                        <td class="label-cell">カメラ 合計</td>
+                                        <td id="hwCameraTotalSales" style="text-align:right; font-variant-numeric: tabular-nums;">¥0</td>
                                         <td class="hw-rate-cell" id="hwCameraRate">0.0%</td>
                                     </tr>
                                 </tbody>
@@ -4324,7 +4339,7 @@
                                 </thead>
                                 <tbody>
                                     <tr data-hw="lensNew">
-                                        <td class="label-cell">新品レンズ</td>
+                                        <td class="label-cell">レンズ</td>
                                         <td><input type="number" data-field="sales" value="0" min="0" step="1000" oninput="calculateHardwareAll()" /></td>
                                         <td class="hw-rate-cell" id="hwLensRate">0.0%</td>
                                     </tr>
@@ -5894,6 +5909,9 @@
                     document.getElementById('hwCustomPriceWrap').style.display = selBaseline.value === 'custom' ? '' : 'none';
                 }
                 if (hd.items) {
+                    if (hd.items.cameraNew && !hd.items.cameraNewMirrorless && !hd.items.cameraNewDslr && !hd.items.cameraNewCompact) {
+                        hd.items.cameraNewMirrorless = { sales: hd.items.cameraNew.sales || 0 };
+                    }
                     ['hwCameraTable', 'hwLensTable'].forEach(function(tableId) {
                         document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(function(row) {
                             var key = row.dataset.hw;
@@ -6467,6 +6485,8 @@
             const cameraRate = budgetCamera > 0 ? (cameraSales / budgetCamera * 100) : 0;
             const crEl = document.getElementById('hwCameraRate');
             if (crEl) crEl.textContent = cameraRate.toFixed(1) + '%';
+            const ctsEl = document.getElementById('hwCameraTotalSales');
+            if (ctsEl) ctsEl.textContent = '¥' + cameraSales.toLocaleString();
 
             // Lens sales & rate
             let lensSales = 0;
@@ -6851,6 +6871,9 @@
 
                 // Restore table data
                 if (parsed.items) {
+                    if (parsed.items.cameraNew && !parsed.items.cameraNewMirrorless && !parsed.items.cameraNewDslr && !parsed.items.cameraNewCompact) {
+                        parsed.items.cameraNewMirrorless = { sales: parsed.items.cameraNew.sales || 0 };
+                    }
                     ['hwCameraTable', 'hwLensTable'].forEach(tableId => {
                         document.querySelectorAll('#' + tableId + ' tbody tr[data-hw]').forEach(row => {
                             const key = row.dataset.hw;
