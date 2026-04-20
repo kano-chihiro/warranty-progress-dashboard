@@ -15,4 +15,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy . --project-name warranty-progress-dashboard --branch main
+          command: pages deploy . --project-name warranty-progress-dashboard --branch main --commit-dirty=true --commit-hash=${{ github.sha }} --commit-message="Deploy ${{ github.sha }}"
